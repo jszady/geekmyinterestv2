@@ -31,9 +31,10 @@ export function Navbar() {
             <Image
               src="/images/logo/logo.png"
               alt="Geek My Interest"
-              width={220}
-              height={48}
-              className="h-9 w-auto sm:h-10"
+              width={2291}
+              height={1134}
+              className="h-11 w-auto object-contain object-left sm:h-12 md:h-[3.25rem] lg:h-14 xl:h-16"
+              sizes="(max-width: 640px) 200px, (max-width: 768px) 240px, (max-width: 1024px) 280px, 320px"
               priority
             />
           </Link>

@@ -1,3 +1,4 @@
+import { FeaturedFeedSection } from "@/components/feed/FeaturedFeedSection";
 import { Hero } from "@/components/landing/Hero";
 import { Navbar } from "@/components/layout/Navbar";
 
@@ -23,6 +24,7 @@ export default function Home() {
 
       <Navbar />
       <Hero />
+      <FeaturedFeedSection />
     </main>
   );
 }

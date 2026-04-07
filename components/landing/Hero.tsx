@@ -23,7 +23,7 @@ export function Hero() {
         <SocialIcons />
       </div>
 
-      <div className="relative flex w-full flex-col items-center justify-center px-5 pb-14 pt-10 sm:pb-16 lg:col-start-2 lg:row-start-1 lg:min-h-dvh lg:items-center lg:justify-center lg:px-10 lg:pb-20 lg:pt-32 xl:px-14 2xl:pr-16">
+      <div className="relative flex w-full flex-col items-center justify-end px-5 pb-14 pt-10 sm:pb-16 lg:col-start-2 lg:row-start-1 lg:min-h-dvh lg:items-end lg:justify-end lg:px-10 lg:pb-20 lg:pt-32 xl:px-14 2xl:pr-16">
         <div
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_55%_48%_at_72%_58%,rgba(56,189,248,0.085),transparent_58%)]"
           aria-hidden
@@ -33,27 +33,18 @@ export function Hero() {
           aria-hidden
         />
 
-        <div className="relative z-[1] w-full max-w-[280px] sm:max-w-[300px] lg:ml-auto lg:mr-8 lg:max-w-[360px] xl:mr-12 xl:max-w-[400px]">
-          <div
-            className="pointer-events-none absolute inset-[-14%] rounded-full bg-[radial-gradient(circle_at_50%_55%,rgba(56,189,248,0.14),rgba(124,58,237,0.05)_48%,transparent_68%)] blur-[40px] lg:blur-[48px]"
-            aria-hidden
+        {/* Robot position: adjust translate-x / translate-y only (animation stays on Image). */}
+        <div className="relative z-[1] w-full max-w-[400px] translate-x-0 translate-y-0 sm:max-w-[460px] md:max-w-[520px] lg:max-w-[560px] xl:max-w-[620px] 2xl:max-w-[650px]">
+          <Image
+            src={HERO_IMAGE}
+            alt="Geek My Interest mascot"
+            width={1133}
+            height={1474}
+            quality={90}
+            className="h-auto w-full max-h-[58dvh] object-contain sm:max-h-[62dvh] lg:max-h-[74dvh] xl:max-h-[80dvh] animate-float-slow"
+            sizes="(max-width: 640px) 92vw, (max-width: 768px) 520px, (max-width: 1024px) 560px, (max-width: 1280px) 620px, 650px"
+            priority
           />
-          <div
-            className="pointer-events-none absolute -bottom-[5%] left-[6%] right-[6%] h-[24%] rounded-full bg-cyan-400/11 blur-[30px]"
-            aria-hidden
-          />
-
-          <div className="relative w-full aspect-[3/4] animate-float-slow sm:aspect-[4/5] lg:aspect-[3/4]">
-            <Image
-              src={HERO_IMAGE}
-              alt="Geek My Interest mascot"
-              fill
-              quality={90}
-              className="object-contain object-bottom [object-position:center_bottom] lg:[object-position:right_bottom]"
-              sizes="(max-width: 1024px) 300px, 400px"
-              priority
-            />
-          </div>
         </div>
       </div>
     </section>
