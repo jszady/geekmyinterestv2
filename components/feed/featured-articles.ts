@@ -74,11 +74,67 @@ export const featuredArticles: PostCardData[] = [
       alt: "Esports arena placeholder",
     },
   },
+  {
+    href: "/articles/sci-fi-franchise-timeline",
+    title: "The Sci-Fi Franchise Timeline Fans Are Using to Predict the Next Drop",
+    category: "Movie",
+    image: {
+      src: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=900&q=80",
+      alt: "Space and science fiction placeholder",
+    },
+  },
+  {
+    href: "/articles/podcast-weekly-wrap",
+    title: "Podcast Wrap: The Week's Biggest Geek Culture Debates, Settled",
+    category: "Show",
+    image: {
+      src: "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=900&q=80",
+      alt: "Podcast studio placeholder",
+    },
+  },
+  {
+    href: "/articles/retro-console-price-surge",
+    title: "Retro Console Prices Spike — What Collectors Should Know Before Buying",
+    category: "Game",
+    image: {
+      src: "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=900&q=80",
+      alt: "Retro gaming placeholder",
+    },
+  },
+  {
+    href: "/articles/limited-edition-drop-sells-out",
+    title: "Limited Edition Drop Sells Out in Minutes — What Restock Rumors Say",
+    category: "Game",
+    image: {
+      src: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=900&q=80",
+      alt: "Gaming merchandise placeholder",
+    },
+  },
+  {
+    href: "/articles/creator-interview-season-finale",
+    title: "Showrunner Interview: How the Season Finale Sets Up What's Next",
+    category: "Show",
+    image: {
+      src: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=900&q=80",
+      alt: "Interview and studio placeholder",
+    },
+  },
 ];
 
-/** ScreenRant-style hierarchy: one lead, a short stack, then the rest. */
+/**
+ * Lead band: featured + 8 supporting slots (4 stacked rtop + 3 bottom row + rbottom).
+ */
 export const editorialFeed: EditorialFeedLayout = {
   featured: featuredArticles[0]!,
-  secondary: [featuredArticles[1]!, featuredArticles[2]!, featuredArticles[3]!],
-  standard: featuredArticles.slice(4),
+  secondary: [
+    featuredArticles[1]!,
+    featuredArticles[2]!,
+    featuredArticles[11]!,
+    featuredArticles[12]!,
+    featuredArticles[3]!,
+    featuredArticles[4]!,
+    featuredArticles[5]!,
+    featuredArticles[6]!,
+  ],
+  standard: featuredArticles.slice(7, 11),
 };

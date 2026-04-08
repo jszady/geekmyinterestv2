@@ -1,6 +1,10 @@
 export type PostCategory = "Movie" | "Show" | "Anime" | "Game";
 
-export type PostCardVariant = "featured" | "secondary" | "standard";
+export type PostCardVariant =
+  | "featured"
+  | "secondary"
+  | "supporting"
+  | "standard";
 
 export type PostCardData = {
   href: string;

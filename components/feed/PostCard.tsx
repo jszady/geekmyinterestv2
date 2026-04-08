@@ -4,10 +4,14 @@ import type { PostCardData, PostCardVariant } from "./types";
 
 const topBarClip = "polygon(0.85rem 0, 100% 0, 100% 100%, 0 100%, 0 0.65rem)";
 
-type PostCardProps = PostCardData & { variant?: PostCardVariant };
+type PostCardProps = PostCardData & {
+  variant?: PostCardVariant;
+  /** Tighter landscape + title strip for editorial right rail (lg+). */
+  railCompact?: boolean;
+};
 
 /** Class strings must appear as explicit literals in this file so Tailwind emits them. */
-function postCardFrameClasses(variant: PostCardVariant) {
+function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
   if (variant === "featured") {
     return {
       aspect:
@@ -23,7 +27,22 @@ function postCardFrameClasses(variant: PostCardVariant) {
         "(max-width: 1024px) 100vw, (max-width: 1536px) 58vw, 900px",
     };
   }
-  if (variant === "secondary") {
+  if (variant === "secondary" || variant === "supporting") {
+    if (railCompact) {
+      return {
+        aspect:
+          "aspect-[3/2] sm:aspect-[3/2] lg:aspect-[2/1] xl:aspect-[15/8]",
+        glow: "shadow-[0_0_12px_-2px_rgba(217,70,239,0.4),0_0_16px_-4px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_18px_-1px_rgba(217,70,239,0.52),0_0_22px_-3px_rgba(34,211,238,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        categoryBar: "px-3 py-1.5 sm:px-3.5 sm:py-2",
+        categoryText:
+          "text-[9px] tracking-[0.24em] sm:text-[10px] sm:tracking-[0.22em]",
+        titleBar: "px-3 py-2 sm:px-3.5 sm:py-2.5",
+        titleText:
+          "text-[0.8rem] font-bold leading-snug sm:text-[0.85rem] line-clamp-2 lg:line-clamp-2",
+        imageSizes:
+          "(max-width: 1024px) 100vw, (max-width: 1536px) 22vw, 320px",
+      };
+    }
     return {
       aspect: "aspect-[3/2] sm:aspect-[3/2] lg:aspect-[7/5]",
       glow: "shadow-[0_0_12px_-2px_rgba(217,70,239,0.4),0_0_16px_-4px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_18px_-1px_rgba(217,70,239,0.52),0_0_22px_-3px_rgba(34,211,238,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]",
@@ -51,9 +70,16 @@ function postCardFrameClasses(variant: PostCardVariant) {
   };
 }
 
-export function PostCard({ variant = "standard", ...data }: PostCardProps) {
+export function PostCard({
+  variant = "standard",
+  railCompact = false,
+  ...data
+}: PostCardProps) {
   const { href, title, category, image } = data;
-  const c = postCardFrameClasses(variant);
+  const c = postCardFrameClasses(
+    variant,
+    variant === "supporting" ? railCompact : false,
+  );
 
   return (
     <Link

@@ -12,11 +12,11 @@ export function SubscribeForm() {
       onSubmit={handleSubmit}
       className="flex w-full max-w-xl flex-col gap-3 sm:flex-row sm:items-stretch sm:rounded-full sm:border sm:border-white/10 sm:bg-white/[0.04] sm:p-1.5 sm:pl-5 sm:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]"
     >
-      <label htmlFor="hero-email" className="sr-only">
+      <label htmlFor="newsletter-email" className="sr-only">
         Email address
       </label>
       <input
-        id="hero-email"
+        id="newsletter-email"
         name="email"
         type="email"
         autoComplete="email"
