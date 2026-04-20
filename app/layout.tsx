@@ -1,11 +1,6 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { geistSans, pressStart2P } from "./fonts";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Geek My Interest",
@@ -19,7 +14,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} dark`}>
+    <html
+      lang="en"
+      className={`${geistSans.variable} ${pressStart2P.variable} dark`}
+    >
       <body className={`${geistSans.className} bg-[#02040d] text-zinc-100`}>
         {children}
       </body>

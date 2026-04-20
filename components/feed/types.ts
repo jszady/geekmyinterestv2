@@ -14,11 +14,15 @@ export type PostCardData = {
     src: string;
     alt: string;
   };
+  /** Optional copy for list-style layouts (e.g. LATEST band). */
+  excerpt?: string;
+  author?: string;
+  timeLabel?: string;
 };
 
 /** Editorial homepage slots — swap for CMS later. */
 export type EditorialFeedLayout = {
   featured: PostCardData;
   secondary: PostCardData[];
-  standard: PostCardData[];
+  latest: PostCardData[];
 };

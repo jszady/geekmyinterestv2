@@ -1,7 +1,5 @@
-import { CategoryBandSection } from "@/components/home/CategoryBandSection";
 import { EditorialLeadSection } from "@/components/home/EditorialLeadSection";
-import { homeCategoryBands } from "@/components/home/home-feed-data";
-import { MoreStoriesGridSection } from "@/components/home/MoreStoriesGridSection";
+import { LatestSection } from "@/components/home/LatestSection";
 import { NewsletterCtaSection } from "@/components/landing/NewsletterCtaSection";
 import { Navbar } from "@/components/layout/Navbar";
 
@@ -27,17 +25,7 @@ export default function Home() {
 
       <Navbar />
       <EditorialLeadSection />
-      <MoreStoriesGridSection />
-      {homeCategoryBands.map((band) => (
-        <CategoryBandSection
-          key={band.id}
-          id={band.id}
-          label={band.label}
-          title={band.title}
-          description={band.description}
-          posts={band.posts}
-        />
-      ))}
+      <LatestSection />
       <NewsletterCtaSection />
     </main>
   );

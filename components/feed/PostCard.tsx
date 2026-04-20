@@ -15,7 +15,7 @@ function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
   if (variant === "featured") {
     return {
       aspect:
-        "aspect-[16/11] sm:aspect-[16/10] lg:aspect-[5/4] xl:aspect-[16/11]",
+        "aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/10] xl:aspect-[16/10]",
       glow: "shadow-[0_0_16px_-2px_rgba(217,70,239,0.48),0_0_22px_-4px_rgba(34,211,238,0.34),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_24px_-1px_rgba(217,70,239,0.58),0_0_30px_-3px_rgba(34,211,238,0.45),inset_0_1px_0_rgba(255,255,255,0.08)]",
       categoryBar: "px-4 py-3 sm:py-3.5",
       categoryText:
@@ -31,7 +31,7 @@ function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
     if (railCompact) {
       return {
         aspect:
-          "aspect-[3/2] sm:aspect-[3/2] lg:aspect-[2/1] xl:aspect-[15/8]",
+          "aspect-[4/3] sm:aspect-[4/3] lg:aspect-[3/2] xl:aspect-[3/2]",
         glow: "shadow-[0_0_12px_-2px_rgba(217,70,239,0.4),0_0_16px_-4px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_18px_-1px_rgba(217,70,239,0.52),0_0_22px_-3px_rgba(34,211,238,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]",
         categoryBar: "px-3 py-1.5 sm:px-3.5 sm:py-2",
         categoryText:
@@ -44,7 +44,7 @@ function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
       };
     }
     return {
-      aspect: "aspect-[3/2] sm:aspect-[3/2] lg:aspect-[7/5]",
+      aspect: "aspect-[4/3] sm:aspect-[4/3] lg:aspect-[6/5]",
       glow: "shadow-[0_0_12px_-2px_rgba(217,70,239,0.4),0_0_16px_-4px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_18px_-1px_rgba(217,70,239,0.52),0_0_22px_-3px_rgba(34,211,238,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]",
       categoryBar: "px-3 py-2 sm:px-3.5 sm:py-2.5",
       categoryText:

@@ -122,7 +122,7 @@ export const featuredArticles: PostCardData[] = [
 ];
 
 /**
- * Lead band: featured + 8 supporting slots (4 stacked rtop + 3 bottom row + rbottom).
+ * Lead band: featured + 6 supporting slots (3 rail + 3 bottom row).
  */
 export const editorialFeed: EditorialFeedLayout = {
   featured: featuredArticles[0]!,
@@ -130,11 +130,73 @@ export const editorialFeed: EditorialFeedLayout = {
     featuredArticles[1]!,
     featuredArticles[2]!,
     featuredArticles[11]!,
-    featuredArticles[12]!,
     featuredArticles[3]!,
     featuredArticles[4]!,
     featuredArticles[5]!,
-    featuredArticles[6]!,
   ],
-  standard: featuredArticles.slice(7, 11),
+  latest: [
+    {
+      ...featuredArticles[1]!,
+      timeLabel: "9 minutes ago",
+      excerpt:
+        "A scene-by-scene look at the trailer moments fans are already connecting to older franchise lore.",
+      author: "Faith Roswell",
+    },
+    {
+      ...featuredArticles[2]!,
+      timeLabel: "11 minutes ago",
+      excerpt:
+        "What the first reactions say about pacing, soundtrack, and why this season may outgrow expectations.",
+      author: "Cher Thompson",
+    },
+    {
+      ...featuredArticles[3]!,
+      timeLabel: "14 minutes ago",
+      excerpt:
+        "Early launch metrics, patch stability, and the one system dominating player discussion right now.",
+      author: "Angharad Redden",
+    },
+    {
+      ...featuredArticles[5]!,
+      timeLabel: "24 minutes ago",
+      excerpt:
+        "Separating credible signals from noise — and what studios have actually confirmed versus fan wishlists.",
+      author: "Riley Park",
+    },
+    {
+      ...featuredArticles[7]!,
+      timeLabel: "42 minutes ago",
+      excerpt:
+        "Highlights from the arena, key team adjustments, and the moments that swung momentum in the final maps.",
+      author: "Jordan Lee",
+    },
+    {
+      ...featuredArticles[8]!,
+      timeLabel: "2 hours ago",
+      excerpt:
+        "How canon dates line up with recent announcements — and what fans are getting wrong about the next chapter.",
+      author: "Sam Rivera",
+    },
+    {
+      ...featuredArticles[9]!,
+      timeLabel: "Yesterday",
+      excerpt:
+        "The debates that dominated forums this week, distilled into clear takeaways (and a few spicy opinions).",
+      author: "Morgan Ellis",
+    },
+    {
+      ...featuredArticles[10]!,
+      timeLabel: "5 hours ago",
+      excerpt:
+        "Price trends, authenticity checks, and what to watch for before you pull the trigger on a “mint” listing.",
+      author: "Casey Ng",
+    },
+    {
+      ...featuredArticles[12]!,
+      timeLabel: "8 hours ago",
+      excerpt:
+        "Spoiler-free context on the finale’s biggest swings — and how they set up the story the writers want to tell next.",
+      author: "Alex Kim",
+    },
+  ],
 };
