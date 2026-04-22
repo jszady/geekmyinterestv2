@@ -6,12 +6,23 @@ const topBarClip = "polygon(0.85rem 0, 100% 0, 100% 100%, 0 100%, 0 0.65rem)";
 
 type PostCardProps = PostCardData & {
   variant?: PostCardVariant;
+  /** Optional stable slot label for homepage editorial tests (e.g. `main_feature`, `feature_3`). */
+  editorialSlot?: string;
   /** Tighter landscape + title strip for editorial right rail (lg+). */
   railCompact?: boolean;
+  /**
+   * Fill a stretched grid/flex cell (no fixed aspect) — image area grows.
+   * Use on supporting cards in editorial bottom row so baselines align with the rail.
+   */
+  stretchToCell?: boolean;
 };
 
 /** Class strings must appear as explicit literals in this file so Tailwind emits them. */
-function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
+function postCardFrameClasses(
+  variant: PostCardVariant,
+  railCompact?: boolean,
+  stretchToCell?: boolean,
+) {
   if (variant === "featured") {
     return {
       aspect:
@@ -28,6 +39,22 @@ function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
     };
   }
   if (variant === "secondary" || variant === "supporting") {
+    if (stretchToCell && !railCompact) {
+      return {
+        aspect: "",
+        frameFill:
+          "flex min-h-0 h-full w-full flex-col rounded-lg bg-gradient-to-b from-fuchsia-500/[0.5] via-cyan-400/[0.38] to-fuchsia-500/[0.48] p-px",
+        glow: "shadow-[0_0_12px_-2px_rgba(217,70,239,0.4),0_0_16px_-4px_rgba(34,211,238,0.28),inset_0_1px_0_rgba(255,255,255,0.06)] group-hover:shadow-[0_0_18px_-1px_rgba(217,70,239,0.52),0_0_22px_-3px_rgba(34,211,238,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]",
+        categoryBar: "px-3 py-2 sm:px-3.5 sm:py-2.5",
+        categoryText:
+          "text-[9px] tracking-[0.24em] sm:text-[10px] sm:tracking-[0.22em]",
+        titleBar: "px-3 py-2.5 sm:px-3.5 sm:py-3",
+        titleText:
+          "text-[0.8rem] font-bold leading-snug sm:text-[0.85rem] line-clamp-2 lg:line-clamp-2",
+        imageSizes:
+          "(max-width: 1024px) 100vw, (max-width: 1536px) 36vw, 480px",
+      };
+    }
     if (railCompact) {
       return {
         aspect:
@@ -73,18 +100,22 @@ function postCardFrameClasses(variant: PostCardVariant, railCompact?: boolean) {
 export function PostCard({
   variant = "standard",
   railCompact = false,
+  stretchToCell = false,
+  editorialSlot,
   ...data
 }: PostCardProps) {
   const { href, title, category, image } = data;
   const c = postCardFrameClasses(
     variant,
     variant === "supporting" ? railCompact : false,
+    variant === "supporting" ? stretchToCell : false,
   );
 
   return (
     <Link
       href={href}
       data-post-variant={variant}
+      data-editorial-slot={editorialSlot}
       className="group block h-full w-full outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#02040d]"
     >
       <article
@@ -93,13 +124,19 @@ export function PostCard({
       >
         <div
           className={
-            "relative w-full rounded-lg bg-gradient-to-b from-fuchsia-500/[0.5] via-cyan-400/[0.38] to-fuchsia-500/[0.48] p-px transition-[box-shadow] duration-300 ease-out motion-reduce:transition-none " +
-            c.aspect +
-            " " +
-            c.glow
+            "relative w-full transition-[box-shadow] duration-300 ease-out motion-reduce:transition-none " +
+            ("frameFill" in c && c.frameFill
+              ? `${c.frameFill} ${c.glow}`
+              : `rounded-lg bg-gradient-to-b from-fuchsia-500/[0.5] via-cyan-400/[0.38] to-fuchsia-500/[0.48] p-px ${c.aspect} ${c.glow}`)
           }
         >
-          <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-[7px] bg-[#040812]">
+          <div
+            className={
+              stretchToCell && variant === "supporting"
+                ? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-[7px] bg-[#040812]"
+                : "flex h-full min-h-0 flex-col overflow-hidden rounded-[7px] bg-[#040812]"
+            }
+          >
             <div
               className={
                 "relative z-[1] shrink-0 border-b border-fuchsia-500/15 bg-gradient-to-r from-[#050a14] via-[#070d18] to-[#050a14] " +

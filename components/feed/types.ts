@@ -1,4 +1,4 @@
-export type PostCategory = "Movie" | "Show" | "Anime" | "Game";
+export type PostCategory = "Movie" | "Show" | "Anime" | "Game" | "Tech";
 
 export type PostCardVariant =
   | "featured"

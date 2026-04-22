@@ -1,5 +1,6 @@
-import { editorialFeed } from "@/components/feed/featured-articles";
 import { PostCard } from "@/components/feed/PostCard";
+import type { EditorialFeedLayout } from "@/components/feed/types";
+import { HOMEPAGE_FEATURE_SLOTS } from "@/lib/posts/homepage-slots";
 
 const DESKTOP_LEAD_GRID_STYLE = {
   gridTemplateColumns: "minmax(0, 2.7fr) minmax(0, 1.3fr)",
@@ -9,8 +10,10 @@ const DESKTOP_LEAD_GRID_STYLE = {
   `,
 } as const;
 
-export function EditorialLeadSection() {
-  const { featured, secondary } = editorialFeed;
+type Props = { editorial: EditorialFeedLayout };
+
+export function EditorialLeadSection({ editorial }: Props) {
+  const { featured, secondary } = editorial;
   const [rt1, rt2, rt3, s1, s2, s3] = secondary;
 
   return (
@@ -32,37 +35,60 @@ export function EditorialLeadSection() {
         {/* Mobile / tablet: content-first stack + simple grid */}
         <div className="flex flex-col gap-5 lg:hidden">
           <div className="min-w-0">
-            <PostCard {...featured} variant="featured" />
+            <PostCard {...featured} variant="featured" editorialSlot="main_feature" />
           </div>
           <div
             className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-4"
             aria-label="Supporting stories"
           >
-            {[rt1, rt2, rt3, s1, s2, s3].map((post) => (
-              <PostCard key={post.href} {...post} variant="supporting" />
+            {[rt1, rt2, rt3, s1, s2, s3].map((post, idx) => (
+              <PostCard
+                key={post.href}
+                {...post}
+                variant="supporting"
+                editorialSlot={HOMEPAGE_FEATURE_SLOTS[idx]}
+              />
             ))}
           </div>
         </div>
 
         {/* Desktop: lead story + aligned lower trio with 3-card rail */}
         <div
-          className="hidden min-w-0 gap-x-5 gap-y-2.5 lg:grid xl:gap-x-6 xl:gap-y-3"
+          className="hidden min-w-0 items-stretch gap-x-5 gap-y-2.5 lg:grid xl:gap-x-6 xl:gap-y-3"
           style={DESKTOP_LEAD_GRID_STYLE}
           aria-label="Editorial lead layout"
         >
-          <div className="min-h-0 min-w-0 flex flex-col gap-2.5 xl:gap-3" style={{ gridArea: "left" }}>
+          <div
+            className="grid min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)] gap-2.5 xl:gap-3"
+            style={{ gridArea: "left" }}
+          >
             <div className="min-h-0 min-w-0">
-              <PostCard {...featured} variant="featured" />
+              <PostCard {...featured} variant="featured" editorialSlot="main_feature" />
             </div>
-            <div className="grid min-h-0 min-w-0 grid-cols-3 gap-2.5 xl:gap-3">
-              <div className="min-h-0 min-w-0">
-                <PostCard {...s1} variant="supporting" />
+            <div className="grid min-h-0 min-w-0 grid-cols-3 items-stretch gap-2.5 xl:gap-3">
+              <div className="flex min-h-0 min-w-0 flex-col">
+                <PostCard
+                  {...s1}
+                  stretchToCell
+                  variant="supporting"
+                  editorialSlot={HOMEPAGE_FEATURE_SLOTS[3]}
+                />
               </div>
-              <div className="min-h-0 min-w-0">
-                <PostCard {...s2} variant="supporting" />
+              <div className="flex min-h-0 min-w-0 flex-col">
+                <PostCard
+                  {...s2}
+                  stretchToCell
+                  variant="supporting"
+                  editorialSlot={HOMEPAGE_FEATURE_SLOTS[4]}
+                />
               </div>
-              <div className="min-h-0 min-w-0">
-                <PostCard {...s3} variant="supporting" />
+              <div className="flex min-h-0 min-w-0 flex-col">
+                <PostCard
+                  {...s3}
+                  stretchToCell
+                  variant="supporting"
+                  editorialSlot={HOMEPAGE_FEATURE_SLOTS[5]}
+                />
               </div>
             </div>
           </div>
@@ -70,9 +96,25 @@ export function EditorialLeadSection() {
             className="flex min-h-0 min-w-0 flex-col gap-2 xl:gap-2.5"
             style={{ gridArea: "rtop" }}
           >
-            <PostCard {...rt1} variant="supporting" railCompact />
-            <PostCard {...rt2} variant="supporting" railCompact />
-            <PostCard {...rt3} variant="supporting" railCompact />
+            <PostCard
+              {...rt1}
+              variant="supporting"
+              railCompact
+              editorialSlot={HOMEPAGE_FEATURE_SLOTS[0]}
+            />
+            <PostCard
+              {...rt2}
+              variant="supporting"
+              railCompact
+              editorialSlot={HOMEPAGE_FEATURE_SLOTS[1]}
+            />
+            <PostCard
+              {...rt3}
+              variant="supporting"
+              railCompact
+              editorialSlot={HOMEPAGE_FEATURE_SLOTS[2]}
+            />
+            <div className="min-h-0 flex-1" aria-hidden />
           </div>
         </div>
       </div>

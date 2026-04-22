@@ -1,12 +1,11 @@
 "use client";
 
-import { editorialFeed } from "@/components/feed/featured-articles";
 import type { PostCardData, PostCategory } from "@/components/feed/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-type LatestFilterId = "all" | "movies" | "tv" | "anime" | "gaming";
+type LatestFilterId = "all" | "movies" | "tv" | "anime" | "gaming" | "tech";
 
 const FILTERS: { id: LatestFilterId; label: string }[] = [
   { id: "all", label: "ALL" },
@@ -14,6 +13,7 @@ const FILTERS: { id: LatestFilterId; label: string }[] = [
   { id: "tv", label: "TV" },
   { id: "anime", label: "ANIME" },
   { id: "gaming", label: "GAMING" },
+  { id: "tech", label: "TECH" },
 ];
 
 function postMatchesFilter(post: PostCardData, filter: LatestFilterId): boolean {
@@ -22,6 +22,7 @@ function postMatchesFilter(post: PostCardData, filter: LatestFilterId): boolean 
   if (filter === "tv") return post.category === "Show";
   if (filter === "anime") return post.category === "Anime";
   if (filter === "gaming") return post.category === "Game";
+  if (filter === "tech") return post.category === "Tech";
   return false;
 }
 
@@ -46,8 +47,9 @@ function CommentGlyph({ className }: { className?: string }) {
   );
 }
 
-export function LatestSection() {
-  const posts = editorialFeed.latest;
+type Props = { posts: PostCardData[] };
+
+export function LatestSection({ posts }: Props) {
   const [active, setActive] = useState<LatestFilterId>("all");
   const visible = useMemo(
     () => posts.filter((post) => postMatchesFilter(post, active)),
@@ -116,6 +118,8 @@ function categoryChannel(cat: PostCategory): string {
       return "ANIME";
     case "Game":
       return "GAMING";
+    case "Tech":
+      return "TECH";
     default:
       return cat;
   }
@@ -127,9 +131,13 @@ function LatestRow({ post }: { post: PostCardData }) {
   const byline = post.author ?? "Staff";
   const when = post.timeLabel ?? "Recently";
 
+  const slug = post.href.replace(/^\/articles\//, "");
+
   return (
     <Link
       href={post.href}
+      data-testid="latest-row"
+      data-latest-slug={slug}
       className="group flex gap-5 outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#02040d] sm:gap-6"
     >
       <div className="relative h-24 w-36 shrink-0 overflow-hidden rounded-md bg-zinc-900 shadow-[0_0_0_1px_rgba(34,211,238,0.2),0_0_18px_-6px_rgba(217,70,239,0.35)] sm:h-32 sm:w-48">
