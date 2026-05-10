@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   },
   description:
     "Hot takes, deep dives, and reviews across gaming, anime, movies, shows, and tech culture.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", sizes: "48x48", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
     siteName: "Geek My Interest",
     type: "website",
