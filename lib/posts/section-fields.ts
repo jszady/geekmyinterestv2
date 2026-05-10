@@ -27,15 +27,21 @@ export function sectionTextFormName(n: PostSectionIndex): string {
   return `section_${n}_text`;
 }
 
-/** True if any `section_*` column has non-empty content (text or image path). */
+export function sectionVideoFormName(n: PostSectionIndex): string {
+  return `section_${n}_video_url`;
+}
+
+/** True if any `section_*` column has non-empty content (text, image path, or video URL). */
 export function postHasEditorialSections(post: {
   [key: string]: unknown;
 }): boolean {
   for (const n of INDICES) {
     const t = post[`section_${n}_text`];
     const i = post[`section_${n}_image`];
+    const v = post[`section_${n}_video_url`];
     if (typeof t === "string" && t.trim()) return true;
     if (typeof i === "string" && i.trim()) return true;
+    if (typeof v === "string" && v.trim()) return true;
   }
   return false;
 }

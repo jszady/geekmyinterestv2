@@ -1,25 +1,56 @@
 import { ArticleComments } from "@/components/articles/ArticleComments";
+import { UserAvatar } from "@/components/profile/UserAvatar";
 import { ArticleEditorialContent } from "@/components/articles/ArticleEditorialContent";
+import { ArticleTagPills } from "@/components/articles/ArticleTagPills";
+import { RelatedArticles } from "@/components/articles/RelatedArticles";
 import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
 import { Navbar } from "@/components/layout/Navbar";
 import { fetchCommentsForPost } from "@/lib/comments/queries";
 import { getSessionUser } from "@/lib/auth/session";
+import { isAdmin } from "@/lib/auth/roles";
 import { postImagePublicUrl } from "@/lib/posts/image-url";
 import {
   fetchProfilesByIds,
   fetchPublishedPostBySlug,
 } from "@/lib/posts/queries";
+import { fetchTagsForPostId } from "@/lib/tags/queries";
+import { getPublicSiteUrl } from "@/lib/site-public-url";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+
+const siteUrl = getPublicSiteUrl();
 
 type Params = { slug: string };
 
-export async function generateMetadata({ params }: { params: Promise<Params> }) {
+export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await fetchPublishedPostBySlug(slug);
-  if (!post) return { title: "Article — Geek My Interest" };
-  return { title: `${post.title} — Geek My Interest` };
+  if (!post) return { title: "Article" };
+
+  const description = post.excerpt?.trim().slice(0, 155) ?? `${post.title} — Geek My Interest`;
+  const ogImageUrl = await postImagePublicUrl(post.hero_image ?? post.card_image);
+
+  return {
+    title: post.title,
+    description,
+    alternates: { canonical: `${siteUrl}/articles/${slug}` },
+    openGraph: {
+      title: post.title,
+      description,
+      url: `${siteUrl}/articles/${slug}`,
+      type: "article",
+      ...(post.published_at ? { publishedTime: post.published_at } : {}),
+      ...(ogImageUrl ? { images: [{ url: ogImageUrl, alt: post.title }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description,
+      ...(ogImageUrl ? { images: [ogImageUrl] } : {}),
+    },
+  };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<Params> }) {
@@ -27,17 +58,22 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
   const post = await fetchPublishedPostBySlug(slug);
   if (!post) notFound();
 
-  const [heroUrl, profiles, comments, session] = await Promise.all([
+  const [heroUrl, profiles, comments, session, tags] = await Promise.all([
     postImagePublicUrl(post.hero_image ?? post.card_image),
     fetchProfilesByIds([post.author_id]),
     fetchCommentsForPost(post.id),
     getSessionUser(),
+    fetchTagsForPostId(post.id),
   ]);
 
-  const authorUsername = profiles.get(post.author_id)?.username ?? null;
+  const authorProfile = profiles.get(post.author_id);
+  const authorUsernameRaw = authorProfile?.username ?? null;
+  const authorAvatarUrl = authorProfile?.avatar_url ?? null;
+  const authorUsername = authorUsernameRaw?.trim() || null;
   const authorHref = authorUsername
     ? `/authors/${encodeURIComponent(authorUsername)}`
     : null;
+  const authorDisplay = authorUsername ?? "Geek My Interest";
   const when = post.published_at ?? post.created_at;
   const loginNext = `/login?next=${encodeURIComponent(`/articles/${post.slug}`)}`;
 
@@ -55,22 +91,31 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
         >
           {post.title}
         </h1>
-        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-400">
+        <ArticleTagPills tags={tags} />
+        <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-zinc-400">
           <span>By</span>
-          {authorHref ? (
-            <Link href={authorHref} className="font-semibold text-cyan-200 hover:text-cyan-100">
-              {authorUsername ?? "Author"}
-            </Link>
-          ) : (
-            <span className="font-semibold text-zinc-200">{authorUsername ?? "Author"}</span>
-          )}
+          <span className="inline-flex items-center gap-2">
+            <UserAvatar
+              username={authorUsernameRaw}
+              avatarUrl={authorAvatarUrl}
+              size="sm"
+              decorative
+            />
+            {authorHref ? (
+              <Link href={authorHref} className="font-semibold text-cyan-200 hover:text-cyan-100">
+                {authorDisplay}
+              </Link>
+            ) : (
+              <span className="font-semibold text-zinc-200">{authorDisplay}</span>
+            )}
+          </span>
           <span aria-hidden>·</span>
           <time dateTime={when}>{new Date(when).toLocaleDateString()}</time>
         </div>
 
         {heroUrl ? (
           <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900 shadow-[0_0_24px_-6px_rgba(34,211,238,0.35)]">
-            <Image src={heroUrl} alt="" fill className="object-cover" sizes="(max-width: 768px) 100vw, 720px" priority />
+            <Image src={heroUrl} alt={post.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 720px" priority />
           </div>
         ) : null}
 
@@ -82,6 +127,13 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
           comments={comments}
           canComment={!!session?.user}
           loginNextPath={loginNext}
+          currentUserId={session?.user?.id ?? null}
+          isAdmin={isAdmin(session?.profile ?? null)}
+        />
+        <RelatedArticles
+          postId={post.id}
+          tagIds={tags.map((t) => t.id)}
+          category={String(post.category)}
         />
       </article>
     </main>

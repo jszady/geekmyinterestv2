@@ -6,20 +6,26 @@ import { postHasEditorialSections } from "@/lib/posts/section-fields";
 import { render, screen } from "@testing-library/react";
 
 describe("getEditorialSectionParts", () => {
-  it("emits text then image within a section, in section index order", () => {
+  it("emits text then image then video within a section, in section index order", () => {
     const post = {
       section_1_text: "First block",
       section_1_image: "path/one.png",
+      section_1_video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
       section_3_text: "Third only",
     };
     const parts = getEditorialSectionParts(post);
     expect(parts.map((p) => `${p.kind}:${p.section}`)).toEqual([
       "text:1",
       "image:1",
+      "video:1",
       "text:3",
     ]);
     expect(parts[0]).toMatchObject({ kind: "text", text: "First block" });
     expect(parts[1]).toMatchObject({ kind: "image", storagePath: "path/one.png" });
+    expect(parts[2]).toMatchObject({
+      kind: "video",
+      url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    });
   });
 
   it("skips sections that are completely empty", () => {
@@ -36,6 +42,13 @@ describe("getEditorialSectionParts", () => {
     const post = { section_4_image: "solo.jpg" };
     expect(getEditorialSectionParts(post)).toEqual([
       { kind: "image", section: 4, storagePath: "solo.jpg" },
+    ]);
+  });
+
+  it("allows video-only sections", () => {
+    const post = { section_6_video_url: "https://www.tiktok.com/@x/video/1" };
+    expect(getEditorialSectionParts(post)).toEqual([
+      { kind: "video", section: 6, url: "https://www.tiktok.com/@x/video/1" },
     ]);
   });
 });
@@ -67,9 +80,12 @@ describe("postHasEditorialSections", () => {
     expect(postHasEditorialSections({ title: "x" })).toBe(false);
   });
 
-  it("is true when any section text or image exists", () => {
+  it("is true when any section text, image, or video URL exists", () => {
     expect(postHasEditorialSections({ section_9_text: "Hi" })).toBe(true);
     expect(postHasEditorialSections({ section_2_image: "z" })).toBe(true);
+    expect(postHasEditorialSections({ section_5_video_url: "https://x.com/i/status/1" })).toBe(
+      true,
+    );
   });
 });
 
@@ -81,7 +97,7 @@ describe("Article section UI smoke (ordering)", () => {
         <ol>
           {parts.map((p, i) => (
             <li key={i}>
-              {p.kind === "text" ? p.text : p.storagePath}
+              {p.kind === "text" ? p.text : p.kind === "image" ? p.storagePath : p.url}
             </li>
           ))}
         </ol>

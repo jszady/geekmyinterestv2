@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 
 export const metadata = {
   title: "Sign up — Geek My Interest",
+  robots: { index: false, follow: false },
 };
 
 export default function SignupPage() {

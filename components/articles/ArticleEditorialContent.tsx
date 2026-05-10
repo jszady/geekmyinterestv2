@@ -1,15 +1,17 @@
 import type { PostRow } from "@/lib/database.types";
+import { SectionVideoEmbed } from "@/components/articles/SectionVideoEmbed";
 import { postImagePublicUrl } from "@/lib/posts/image-url";
 import {
   postHasEditorialSections,
   postSectionIndices,
 } from "@/lib/posts/section-fields";
+import { renderSectionTextWithMarkdown } from "@/lib/posts/section-text-markdown";
 import Image from "next/image";
 
 type Props = { post: PostRow };
 
 /**
- * Renders sections 1–15 (text → image per section) or legacy body_part / inline_image.
+ * Renders sections 1–15 (text → image → video per section) or legacy body_part / inline_image.
  */
 export async function ArticleEditorialContent({ post }: Props) {
   if (postHasEditorialSections(post as Record<string, unknown>)) {
@@ -25,9 +27,11 @@ async function EditorialSections({ post }: Props) {
   for (const n of postSectionIndices()) {
     const t = p[`section_${n}_text`];
     const i = p[`section_${n}_image`];
+    const v = p[`section_${n}_video_url`];
     const textStr = typeof t === "string" && t.trim() ? t : null;
     const imgPath = typeof i === "string" && i.trim() ? i.trim() : null;
-    if (!textStr && !imgPath) continue;
+    const videoRaw = typeof v === "string" && v.trim() ? v.trim() : null;
+    if (!textStr && !imgPath && !videoRaw) continue;
 
     const imgUrl = imgPath ? await postImagePublicUrl(imgPath) : null;
 
@@ -40,7 +44,7 @@ async function EditorialSections({ post }: Props) {
         {textStr ? (
           <div className="prose prose-invert max-w-none">
             <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
-              {textStr}
+              {renderSectionTextWithMarkdown(textStr)}
             </p>
           </div>
         ) : null}
@@ -58,6 +62,7 @@ async function EditorialSections({ post }: Props) {
             />
           </div>
         ) : null}
+        {videoRaw ? <SectionVideoEmbed url={videoRaw} sectionIndex={n} /> : null}
       </section>,
     );
   }

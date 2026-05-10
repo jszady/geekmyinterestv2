@@ -1,13 +1,11 @@
-"use client";
-
 import type { PostCardData, PostCategory } from "@/components/feed/types";
+import type { HomepageLatestMeta } from "@/lib/posts/homepage";
+import type { LatestListCat } from "@/lib/posts/latest-list-params";
+import { latestListQueryString } from "@/lib/posts/latest-list-params";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 
-type LatestFilterId = "all" | "movies" | "tv" | "anime" | "gaming" | "tech";
-
-const FILTERS: { id: LatestFilterId; label: string }[] = [
+const FILTERS: { id: LatestListCat; label: string }[] = [
   { id: "all", label: "ALL" },
   { id: "movies", label: "MOVIES" },
   { id: "tv", label: "TV" },
@@ -15,16 +13,6 @@ const FILTERS: { id: LatestFilterId; label: string }[] = [
   { id: "gaming", label: "GAMING" },
   { id: "tech", label: "TECH" },
 ];
-
-function postMatchesFilter(post: PostCardData, filter: LatestFilterId): boolean {
-  if (filter === "all") return true;
-  if (filter === "movies") return post.category === "Movie";
-  if (filter === "tv") return post.category === "Show";
-  if (filter === "anime") return post.category === "Anime";
-  if (filter === "gaming") return post.category === "Game";
-  if (filter === "tech") return post.category === "Tech";
-  return false;
-}
 
 function CommentGlyph({ className }: { className?: string }) {
   return (
@@ -47,14 +35,21 @@ function CommentGlyph({ className }: { className?: string }) {
   );
 }
 
-type Props = { posts: PostCardData[] };
+type Props = {
+  posts: PostCardData[];
+  latestMeta: HomepageLatestMeta;
+};
 
-export function LatestSection({ posts }: Props) {
-  const [active, setActive] = useState<LatestFilterId>("all");
-  const visible = useMemo(
-    () => posts.filter((post) => postMatchesFilter(post, active)),
-    [posts, active],
-  );
+export function LatestSection({ posts, latestMeta }: Props) {
+  const { page, totalCount, perPage } = latestMeta;
+  const activeCat = latestMeta.cat;
+  const totalPages = Math.max(1, Math.ceil(totalCount / perPage));
+  const showPagination = totalCount > perPage; // 25 per page from server meta
+
+  const prevHref =
+    page > 1 ? `/${latestListQueryString(activeCat, page - 1)}` : null;
+  const nextHref =
+    page < totalPages ? `/${latestListQueryString(activeCat, page + 1)}` : null;
 
   return (
     <section
@@ -69,20 +64,19 @@ export function LatestSection({ posts }: Props) {
           LATEST
         </h2>
 
-        <div
+        <nav
           className="mt-5 flex flex-wrap gap-2 md:mt-6"
-          role="tablist"
           aria-label="Filter latest stories by topic"
         >
           {FILTERS.map(({ id, label }) => {
-            const isActive = active === id;
+            const isActive = activeCat === id;
+            const href = `/${latestListQueryString(id, 1)}`;
             return (
-              <button
+              <Link
                 key={id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActive(id)}
+                href={href}
+                scroll={false}
+                aria-current={isActive ? "page" : undefined}
                 className={
                   "rounded-md px-3.5 py-2 text-xs font-semibold uppercase tracking-wide transition-colors md:text-[13px] " +
                   (isActive
@@ -91,18 +85,59 @@ export function LatestSection({ posts }: Props) {
                 }
               >
                 {label}
-              </button>
+              </Link>
             );
           })}
-        </div>
+        </nav>
 
         <ul className="mt-8 divide-y divide-white/[0.06] md:mt-10">
-          {visible.map((post) => (
+          {posts.map((post) => (
             <li key={post.href} className="py-6 first:pt-0 md:py-7">
               <LatestRow post={post} />
             </li>
           ))}
         </ul>
+
+        {showPagination ? (
+          <nav
+            className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/[0.06] pt-8"
+            aria-label="Latest articles pagination"
+          >
+            <div className="text-sm text-zinc-500">
+              Page {page} of {totalPages}
+              <span className="mx-2 text-zinc-700">·</span>
+              {totalCount} article{totalCount === 1 ? "" : "s"}
+            </div>
+            <div className="flex gap-3">
+              {prevHref ? (
+                <Link
+                  href={prevHref}
+                  scroll={false}
+                  className="rounded-lg border border-white/15 bg-white/[0.05] px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-cyan-400/35 hover:text-cyan-100"
+                >
+                  Previous
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-600">
+                  Previous
+                </span>
+              )}
+              {nextHref ? (
+                <Link
+                  href={nextHref}
+                  scroll={false}
+                  className="rounded-lg border border-cyan-400/45 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/55"
+                >
+                  Next
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-zinc-600">
+                  Next
+                </span>
+              )}
+            </div>
+          </nav>
+        ) : null}
       </div>
     </section>
   );

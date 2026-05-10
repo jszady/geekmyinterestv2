@@ -7,12 +7,22 @@ import {
   postSectionIndices,
   sectionImageFormName,
   sectionTextFormName,
+  sectionVideoFormName,
 } from "@/lib/posts/section-fields";
+import { validateAdminImageUpload } from "@/lib/storage/validate-admin-image-upload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveUniqueSlug, slugify } from "@/lib/posts/slug";
+import { fetchTagSlugsByIds, fetchTagSlugsForPostId } from "@/lib/tags/queries";
+import { readTagIdsFromFormData, syncPostTags } from "@/lib/tags/sync";
 import { revalidatePath } from "next/cache";
 
 const BUCKET = "post-images";
+
+function revalidateTagPaths(slugs: string[]) {
+  for (const slug of new Set(slugs.filter(Boolean))) {
+    revalidatePath(`/tag/${slug}`);
+  }
+}
 
 async function requireAdmin() {
   const session = await getSessionUser();
@@ -32,6 +42,10 @@ async function uploadImageField(
   if (!raw || typeof raw === "string") return null;
   const file = raw as File;
   if (!file.size) return null;
+  const checked = await validateAdminImageUpload(file);
+  if (!checked.ok) {
+    throw new Error(`${field}: ${checked.error}`);
+  }
   const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
   const path = `${userId}/${Date.now()}-${field}-${safe}`;
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
@@ -107,8 +121,12 @@ async function buildSectionPayload(
   for (const n of postSectionIndices()) {
     const textKey = sectionTextFormName(n);
     const imgKey = sectionImageFormName(n);
+    const videoKey = sectionVideoFormName(n);
     const rawText = String(formData.get(textKey) ?? "").trim();
     payload[textKey] = rawText.length ? rawText : null;
+
+    const rawVideo = String(formData.get(videoKey) ?? "").trim();
+    payload[videoKey] = rawVideo.length ? rawVideo : null;
 
     const uploaded = await uploadImageField(supabase, userId, formData, imgKey);
     if (uploaded) {
@@ -222,6 +240,16 @@ export async function createPostAction(formData: FormData): Promise<PostSaveResu
       };
     }
 
+    const tagIds = readTagIdsFromFormData(formData);
+    try {
+      await syncPostTags(supabase, data.id, tagIds);
+      revalidateTagPaths(await fetchTagSlugsByIds(tagIds));
+    } catch (tagErr) {
+      const msg = tagErr instanceof Error ? tagErr.message : String(tagErr);
+      console.error("[create post] tags", msg);
+      return { ok: false, error: msg };
+    }
+
     revalidatePath("/");
     revalidatePath("/admin");
     return { ok: true, id: data.id };
@@ -279,6 +307,9 @@ export async function updatePostAction(
       await clearPublishedHomepageSlotConflicts(supabase, slotForUpdate, postId);
     }
 
+    const tagIds = readTagIdsFromFormData(formData);
+    const oldTagSlugs = await fetchTagSlugsForPostId(postId);
+
     const patch = {
       title: f.title,
       slug,
@@ -295,6 +326,16 @@ export async function updatePostAction(
     if (error) {
       console.error("[update post]", error.message);
       return { ok: false, error: error.message };
+    }
+
+    try {
+      await syncPostTags(supabase, postId, tagIds);
+      const newSlugs = await fetchTagSlugsByIds(tagIds);
+      revalidateTagPaths([...oldTagSlugs, ...newSlugs]);
+    } catch (tagErr) {
+      const msg = tagErr instanceof Error ? tagErr.message : String(tagErr);
+      console.error("[update post] tags", msg);
+      return { ok: false, error: msg };
     }
 
     revalidatePath("/");
@@ -322,6 +363,7 @@ export async function deletePostAction(postId: string): Promise<PostSaveResult> 
   }
 
   const paths = allPostImagePathsFromRow(row as Record<string, unknown>);
+  const tagSlugsBeforeDelete = await fetchTagSlugsForPostId(postId);
   await removeStoragePaths(supabase, paths);
 
   const { error } = await supabase.from("posts").delete().eq("id", postId);
@@ -331,6 +373,7 @@ export async function deletePostAction(postId: string): Promise<PostSaveResult> 
 
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidateTagPaths(tagSlugsBeforeDelete);
   if (typeof row.slug === "string" && row.slug) {
     revalidatePath(`/articles/${row.slug}`);
   }

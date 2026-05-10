@@ -2,10 +2,11 @@ import { postSectionIndices } from "@/lib/posts/section-fields";
 
 export type EditorialSectionPart =
   | { kind: "text"; section: number; text: string }
-  | { kind: "image"; section: number; storagePath: string };
+  | { kind: "image"; section: number; storagePath: string }
+  | { kind: "video"; section: number; url: string };
 
 /**
- * Flattened parts matching `ArticleEditorialContent`: within each section index, text (if any) then image (if any).
+ * Flattened parts matching `ArticleEditorialContent`: within each section index, text (if any) then image (if any) then video URL (if any).
  * Empty section indices are omitted entirely.
  */
 export function getEditorialSectionParts(
@@ -15,14 +16,19 @@ export function getEditorialSectionParts(
   for (const n of postSectionIndices()) {
     const t = post[`section_${n}_text`];
     const i = post[`section_${n}_image`];
+    const v = post[`section_${n}_video_url`];
     const textStr = typeof t === "string" && t.trim() ? t : null;
     const imgPath = typeof i === "string" && i.trim() ? i.trim() : null;
-    if (!textStr && !imgPath) continue;
+    const videoUrl = typeof v === "string" && v.trim() ? v.trim() : null;
+    if (!textStr && !imgPath && !videoUrl) continue;
     if (textStr) {
       parts.push({ kind: "text", section: n, text: textStr });
     }
     if (imgPath) {
       parts.push({ kind: "image", section: n, storagePath: imgPath });
+    }
+    if (videoUrl) {
+      parts.push({ kind: "video", section: n, url: videoUrl });
     }
   }
   return parts;

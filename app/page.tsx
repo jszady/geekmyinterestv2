@@ -1,17 +1,67 @@
 import { EditorialLeadSection } from "@/components/home/EditorialLeadSection";
 import { LatestSection } from "@/components/home/LatestSection";
 import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
-import { NewsletterCtaSection } from "@/components/landing/NewsletterCtaSection";
 import { Navbar } from "@/components/layout/Navbar";
 import { buildHomepageData } from "@/lib/posts/homepage";
+import {
+  parseLatestListCat,
+  parseLatestListPage,
+} from "@/lib/posts/latest-list-params";
+import { getPublicSiteUrl } from "@/lib/site-public-url";
+import type { Metadata } from "next";
+
+const baseTitle = "Geek My Interest — Gaming, Anime, Movies & Tech";
+const baseDescription =
+  "Hot takes, deep dives, and reviews across gaming, anime, movies, shows, and tech culture.";
+
+function homeCanonicalUrl(
+  siteBase: string,
+  cat: ReturnType<typeof parseLatestListCat>,
+  page: number,
+): string {
+  const base = siteBase.replace(/\/$/, "");
+  const url = new URL(`${base}/`);
+  if (cat !== "all") url.searchParams.set("cat", cat);
+  if (page > 1) url.searchParams.set("page", String(page));
+  return url.toString();
+}
 
 type PageProps = {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export default async function Home({ searchParams }: PageProps) {
-  const { editorial, latest } = await buildHomepageData();
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const sp = searchParams ? await searchParams : undefined;
+  const page = parseLatestListPage(sp?.page);
+  const cat = parseLatestListCat(sp?.cat);
+  const siteUrl = getPublicSiteUrl();
+  const canonical = homeCanonicalUrl(siteUrl, cat, page);
+
+  const title =
+    page > 1 ? `${baseTitle} · Page ${page}` : baseTitle;
+
+  return {
+    title,
+    description: baseDescription,
+    alternates: { canonical },
+    openGraph: {
+      title: "Geek My Interest",
+      description: baseDescription,
+      url: canonical,
+      type: "website",
+    },
+    twitter: { card: "summary_large_image" },
+  };
+}
+
+export default async function Home({ searchParams }: PageProps) {
+  const sp = searchParams ? await searchParams : undefined;
+  const latestPage = parseLatestListPage(sp?.page);
+  const latestCat = parseLatestListCat(sp?.cat);
+  const { editorial, latest, latestMeta } = await buildHomepageData({
+    latestPage,
+    latestCat,
+  });
   const adminDenied =
     process.env.NODE_ENV === "development" && sp?.adminDenied === "1";
   const denyReason =
@@ -36,8 +86,7 @@ export default async function Home({ searchParams }: PageProps) {
       ) : null}
       <Navbar />
       <EditorialLeadSection editorial={editorial} />
-      <LatestSection posts={latest} />
-      <NewsletterCtaSection />
+      <LatestSection posts={latest} latestMeta={latestMeta} />
     </main>
   );
 }

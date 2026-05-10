@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 export const metadata = {
   title: "Log in — Geek My Interest",
+  robots: { index: false, follow: false },
 };
 
 export default function LoginPage() {

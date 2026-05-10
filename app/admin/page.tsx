@@ -7,8 +7,23 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-6" data-testid="admin-dashboard">
       <p className="text-sm text-zinc-400">
-        Manage posts, homepage slots, and images. Only admins can view this area.
+        Manage posts, homepage slots, and images. Only admins can view this
+        area.
       </p>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href="/admin/posts/new"
+          className="rounded-md border border-cyan-400/35 px-3 py-1.5 text-sm font-semibold text-cyan-100 hover:border-cyan-300/55"
+        >
+          New post
+        </Link>
+        <Link
+          href="/admin/podcasts"
+          className="rounded-md border border-fuchsia-400/35 px-3 py-1.5 text-sm font-semibold text-fuchsia-100 hover:border-fuchsia-300/55"
+        >
+          Manage podcasts
+        </Link>
+      </div>
       <div
         className="overflow-hidden rounded-xl border border-white/[0.08] bg-[#050a14]/80"
         data-testid="admin-posts-table"
@@ -25,12 +40,19 @@ export default async function AdminDashboardPage() {
           </thead>
           <tbody>
             {posts.map((p) => (
-              <tr key={p.id} className="border-b border-white/[0.04] last:border-0">
-                <td className="px-4 py-3 font-medium text-zinc-100">{p.title}</td>
+              <tr
+                key={p.id}
+                className="border-b border-white/[0.04] last:border-0"
+              >
+                <td className="px-4 py-3 font-medium text-zinc-100">
+                  {p.title}
+                </td>
                 <td className="px-4 py-3 text-zinc-400">{p.status}</td>
-                <td className="px-4 py-3 text-zinc-400">{p.homepage_slot ?? "—"}</td>
+                <td className="px-4 py-3 text-zinc-400">
+                  {p.homepage_slot ?? "—"}
+                </td>
                 <td className="px-4 py-3 text-zinc-500">
-                  {p.updated_at ?? p.created_at
+                  {(p.updated_at ?? p.created_at)
                     ? new Date(p.updated_at ?? p.created_at).toLocaleString()
                     : "—"}
                 </td>
@@ -48,7 +70,10 @@ export default async function AdminDashboardPage() {
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
                   No posts yet.{" "}
-                  <Link href="/admin/posts/new" className="text-cyan-300 hover:underline">
+                  <Link
+                    href="/admin/posts/new"
+                    className="text-cyan-300 hover:underline"
+                  >
                     Create one
                   </Link>
                   .

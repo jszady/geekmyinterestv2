@@ -1,13 +1,10 @@
-import { PROFILES_SELECT_COLUMNS } from "@/lib/database.types";
+import "server-only";
+
+import type { CommentWithAuthor } from "@/lib/comments/comment-thread";
+import { fetchPublicProfilesByIds } from "@/lib/profiles/fetch-public-usernames";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-export type CommentWithAuthor = {
-  id: string;
-  body: string;
-  created_at: string;
-  user_id: string;
-  username: string | null;
-};
+export type { CommentWithAuthor } from "@/lib/comments/comment-thread";
 
 export async function fetchCommentsForPost(
   postId: string,
@@ -15,7 +12,7 @@ export async function fetchCommentsForPost(
   const supabase = await createSupabaseServerClient();
   const { data: rows, error } = await supabase
     .from("comments")
-    .select("id, body, created_at, user_id")
+    .select("id, body, created_at, user_id, parent_comment_id")
     .eq("post_id", postId)
     .order("created_at", { ascending: true });
 
@@ -29,26 +26,21 @@ export async function fetchCommentsForPost(
   if (!ids.length) {
     return comments.map((c) => ({
       ...c,
+      parent_comment_id: c.parent_comment_id ?? null,
       username: null,
+      avatar_url: null,
     }));
   }
 
-  const { data: profiles, error: pErr } = await supabase
-    .from("profiles")
-    .select(PROFILES_SELECT_COLUMNS)
-    .in("id", ids);
+  const profileById = await fetchPublicProfilesByIds(ids);
 
-  if (pErr) {
-    console.error("[comments] profiles", pErr.message);
-  }
-
-  const nameById = new Map<string, string | null>();
-  (profiles ?? []).forEach((p: { id: string; username: string | null }) => {
-    nameById.set(p.id, p.username);
+  return comments.map((c) => {
+    const p = profileById.get(c.user_id);
+    return {
+      ...c,
+      parent_comment_id: c.parent_comment_id ?? null,
+      username: p?.username ?? null,
+      avatar_url: p?.avatar_url ?? null,
+    };
   });
-
-  return comments.map((c) => ({
-    ...c,
-    username: nameById.get(c.user_id) ?? null,
-  }));
 }

@@ -1,6 +1,8 @@
 import { AdminDeletePostButton } from "@/components/admin/AdminDeletePostButton";
 import { AdminPostForm } from "@/components/admin/AdminPostForm";
-import { fetchPostByIdForAdmin } from "@/lib/posts/queries";
+import { UserAvatar } from "@/components/profile/UserAvatar";
+import { fetchPostByIdForAdmin, fetchProfilesByIds } from "@/lib/posts/queries";
+import { fetchTagsForPostId } from "@/lib/tags/queries";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -10,6 +12,12 @@ export default async function EditPostPage({ params }: { params: Promise<Params>
   const { id } = await params;
   const post = await fetchPostByIdForAdmin(id);
   if (!post) notFound();
+
+  const [initialTags, authorProfiles] = await Promise.all([
+    fetchTagsForPostId(post.id),
+    fetchProfilesByIds([post.author_id]),
+  ]);
+  const author = authorProfiles.get(post.author_id);
 
   return (
     <div className="space-y-10">
@@ -27,7 +35,20 @@ export default async function EditPostPage({ params }: { params: Promise<Params>
           View live →
         </Link>
       </div>
-      <AdminPostForm mode="edit" post={post} />
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-white/[0.08] bg-[#050a14]/60 px-4 py-3 text-sm text-zinc-300">
+        <UserAvatar
+          username={author?.username ?? null}
+          avatarUrl={author?.avatar_url ?? null}
+          size="md"
+          decorative
+        />
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Author</p>
+          <p className="font-medium text-zinc-100">{author?.username?.trim() || "Unknown"}</p>
+          <p className="text-xs text-zinc-500">ID {post.author_id}</p>
+        </div>
+      </div>
+      <AdminPostForm mode="edit" post={post} initialTags={initialTags} />
       <AdminDeletePostButton postId={post.id} title={post.title} />
     </div>
   );

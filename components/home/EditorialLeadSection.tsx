@@ -18,7 +18,7 @@ export function EditorialLeadSection({ editorial }: Props) {
 
   return (
     <section
-      className="relative z-10 w-full pt-24 sm:pt-28 lg:pt-32"
+      className="relative z-10 w-full pt-8 sm:pt-10 lg:pt-12"
       aria-labelledby="editorial-lead-heading"
     >
       <div className="mx-auto w-full max-w-[1800px] px-5 sm:px-8 lg:px-12 xl:px-16">

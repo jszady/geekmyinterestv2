@@ -5,7 +5,8 @@ import {
   updatePostAction,
   type PostSaveResult,
 } from "@/app/admin/post-actions";
-import type { PostRow } from "@/lib/database.types";
+import { AdminPostTagPicker } from "@/components/admin/AdminPostTagPicker";
+import type { PostRow, TagRow } from "@/lib/database.types";
 import { postSectionIndices } from "@/lib/posts/section-fields";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
@@ -29,7 +30,7 @@ const labelClass = "block text-xs font-semibold uppercase tracking-wide text-zin
 
 type Props =
   | { mode: "create" }
-  | { mode: "edit"; post: PostRow };
+  | { mode: "edit"; post: PostRow; initialTags: TagRow[] };
 
 export function AdminPostForm(props: Props) {
   const router = useRouter();
@@ -57,7 +58,12 @@ export function AdminPostForm(props: Props) {
   }, [state, router, props.mode]);
 
   return (
-    <form action={formAction} encType="multipart/form-data" className="space-y-8">
+    <form
+      action={formAction}
+      encType="multipart/form-data"
+      className="space-y-8"
+      aria-busy={pending}
+    >
       {state?.ok === false ? (
         <div
           className="rounded-lg border border-red-400/35 bg-red-500/10 px-4 py-3 text-sm text-red-100"
@@ -163,6 +169,12 @@ export function AdminPostForm(props: Props) {
             className={fieldClass}
           />
         </div>
+        <div className="md:col-span-2">
+          <AdminPostTagPicker
+            key={props.mode === "edit" ? props.post.id : "new"}
+            initialTags={props.mode === "edit" ? props.initialTags : []}
+          />
+        </div>
       </div>
 
       <aside
@@ -236,16 +248,20 @@ export function AdminPostForm(props: Props) {
           Editorial sections (1–15)
         </h2>
         <p className="text-xs text-zinc-500">
-          Each section can have text, an image, both, or be left empty. Use as many sections as you need for
-          articles or ranked lists. Section images work best at{" "}
-          <span className="font-mono text-zinc-400">1200 × 900 px</span> (see recommended sizes above).
+          Each section can have text, an image, a video/trailer link, any combination, or be left empty. Use as
+          many sections as you need for articles or ranked lists. Section images work best at{" "}
+          <span className="font-mono text-zinc-400">1200 × 900 px</span> (see recommended sizes above). Paste a
+          URL only — no file uploads for video yet. YouTube URLs embed on the article; TikTok, Instagram Reels,
+          X posts, and other links show a “Watch clip” button.
         </p>
         {postSectionIndices().map((n) => {
           const tk = `section_${n}_text`;
           const ik = `section_${n}_image`;
+          const vk = `section_${n}_video_url`;
           const pr = post as Record<string, string | null | undefined> | null;
           const textDefault = pr?.[tk] ?? "";
           const pathDefault = pr?.[ik] ?? null;
+          const videoDefault = pr?.[vk] ?? "";
           return (
             <div
               key={n}
@@ -277,6 +293,21 @@ export function AdminPostForm(props: Props) {
                     <p className="mt-1 break-all text-[11px] text-zinc-500">Current: {pathDefault}</p>
                   ) : null}
                 </div>
+                <div>
+                  <label className={labelClass} htmlFor={vk}>
+                    Video / trailer URL (optional)
+                  </label>
+                  <input
+                    id={vk}
+                    name={vk}
+                    type="text"
+                    inputMode="url"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    defaultValue={videoDefault}
+                    className={fieldClass}
+                    autoComplete="off"
+                  />
+                </div>
               </div>
             </div>
           );
@@ -289,7 +320,11 @@ export function AdminPostForm(props: Props) {
           disabled={pending}
           className="rounded-lg border border-cyan-400/45 bg-gradient-to-r from-cyan-500/15 to-violet-500/15 px-5 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_-6px_rgba(34,211,238,0.45)] disabled:opacity-60"
         >
-          {pending ? "Saving…" : props.mode === "create" ? "Create post" : "Save changes"}
+          {pending
+            ? "Saving..."
+            : props.mode === "create"
+              ? "Create post"
+              : "Save changes"}
         </button>
         {props.mode === "edit" && state?.ok ? (
           <span className="self-center text-sm text-emerald-300/90">Saved.</span>

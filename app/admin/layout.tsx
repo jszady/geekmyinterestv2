@@ -44,10 +44,22 @@ export default async function AdminLayout({
               Posts
             </Link>
             <Link
+              href="/admin/podcasts"
+              className="text-cyan-200/90 hover:text-cyan-100"
+            >
+              Podcasts
+            </Link>
+            <Link
               href="/admin/posts/new"
               className="rounded-md border border-cyan-400/35 px-3 py-1.5 text-cyan-100 hover:border-cyan-300/55"
             >
               New post
+            </Link>
+            <Link
+              href="/admin/podcasts/new"
+              className="rounded-md border border-fuchsia-400/35 px-3 py-1.5 text-fuchsia-100 hover:border-fuchsia-300/55"
+            >
+              New podcast
             </Link>
           </nav>
         </div>

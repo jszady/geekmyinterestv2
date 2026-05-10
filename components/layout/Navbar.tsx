@@ -7,11 +7,13 @@ export async function Navbar() {
   const gate = evaluateAdminGate(session);
   const username =
     session?.profile?.username ?? session?.user?.email ?? "Account";
+  const avatarUrl = session?.profile?.avatar_url ?? null;
 
   return (
     <NavbarView
       signedIn={!!session}
       username={username}
+      avatarUrl={avatarUrl}
       isAdmin={gate.ok}
     />
   );

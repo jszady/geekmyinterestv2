@@ -1,6 +1,8 @@
 "use client";
 
 import { signUpAction, type AuthActionState } from "@/app/auth/actions";
+import { GoogleOAuthButton } from "@/components/auth/GoogleOAuthButton";
+import { SignupAvatarSelector } from "@/components/auth/SignupAvatarSelector";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
@@ -28,7 +30,23 @@ export function SignupForm() {
           {state.error}
         </p>
       ) : null}
-      <form action={formAction} className="space-y-4">
+      {!state.ok && state.reason === "duplicate_email" ? (
+        <div className="rounded-lg border border-cyan-400/25 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-100">
+          <span>Already have an account with this email? </span>
+          <Link href="/login" className="font-semibold text-cyan-200 underline-offset-2 hover:underline">
+            Log in
+          </Link>
+        </div>
+      ) : null}
+      <GoogleOAuthButton nextPath="/" />
+      <div className="relative py-1">
+        <div className="h-px bg-white/[0.08]" />
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#02040d] px-3 text-xs uppercase tracking-wider text-zinc-500">
+          or
+        </span>
+      </div>
+      <form action={formAction} className="space-y-4" encType="multipart/form-data" aria-busy={pending}>
+        <SignupAvatarSelector disabled={pending} />
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-300" htmlFor="username">
             Username
@@ -40,7 +58,8 @@ export function SignupForm() {
             autoComplete="username"
             required
             minLength={2}
-            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2"
+            disabled={pending}
+            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <div>
@@ -53,7 +72,8 @@ export function SignupForm() {
             type="email"
             autoComplete="email"
             required
-            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2"
+            disabled={pending}
+            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <div>
@@ -70,7 +90,8 @@ export function SignupForm() {
             autoComplete="new-password"
             required
             minLength={6}
-            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2"
+            disabled={pending}
+            className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
         </div>
         <button
@@ -78,7 +99,7 @@ export function SignupForm() {
           disabled={pending}
           className="w-full rounded-lg border border-cyan-400/45 bg-gradient-to-r from-cyan-500/15 to-violet-500/15 py-2.5 text-sm font-semibold text-white shadow-[0_0_24px_-6px_rgba(34,211,238,0.45)] transition hover:border-cyan-300/55 disabled:opacity-60"
         >
-          {pending ? "Creating account…" : "Create account"}
+          {pending ? "Creating account..." : "Create account"}
         </button>
       </form>
       <p className="text-center text-sm text-zinc-400">

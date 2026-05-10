@@ -65,15 +65,6 @@ export function requireSupabasePublicEnvForServer(): {
   const urlRaw = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonRaw = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  if (process.env.NODE_ENV === "development") {
-    // Temporary diagnostics — remove once env is confirmed stable
-    console.log("[supabase-env] SUPABASE URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log(
-      "[supabase-env] has NEXT_PUBLIC_SUPABASE_ANON_KEY:",
-      Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-    );
-  }
-
   const url = trimEnv(urlRaw);
   const anonKey = trimEnv(anonRaw);
 
