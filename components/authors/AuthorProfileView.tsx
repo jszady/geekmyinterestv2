@@ -110,7 +110,7 @@ export function AuthorProfileView({
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-zinc-300 sm:text-base">
           {(bio ?? "").trim() ? (
-            bio.trim()
+            (bio ?? "").trim()
           ) : (
             <span className="italic text-zinc-500">No bio added yet.</span>
           )}

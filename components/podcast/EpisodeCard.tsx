@@ -55,7 +55,7 @@ export function EpisodeCard({ episode }: EpisodeCardProps) {
           {episode.summary}
         </p>
         <div className="flex flex-wrap gap-2">
-          {episode.tags.map((tag) => (
+          {(episode.tags ?? []).map((tag) => (
             <span
               key={tag}
               className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-fuchsia-100/90"

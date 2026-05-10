@@ -13,6 +13,7 @@ export type PodcastEpisodeView = {
   youtubeUrl: string | null;
   spotifyUrl: string | null;
   appleMusicUrl: string | null;
+  tags?: string[];
 };
 
 export const listenPlatforms = [
