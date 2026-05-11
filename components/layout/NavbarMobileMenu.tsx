@@ -38,10 +38,15 @@ export function NavbarMobileMenu({
     if (el) el.open = false;
   }, [pathname]);
 
+  const closeMenu = () => {
+    const el = detailsRef.current;
+    if (el) el.open = false;
+  };
+
   return (
     <details
       ref={detailsRef}
-      className="relative z-50 md:hidden"
+      className="group relative z-50 md:hidden"
       data-mobile-nav
     >
       <summary
@@ -55,11 +60,27 @@ export function NavbarMobileMenu({
         </span>
         Menu
       </summary>
+      <button
+        type="button"
+        aria-label="Close menu overlay"
+        className="fixed inset-0 z-[55] hidden bg-black/45 group-open:block"
+        onClick={closeMenu}
+      />
       <div
         className="absolute right-0 z-[60] mt-2 w-[min(100vw-1.5rem,20rem)] max-h-[min(70vh,28rem)] overflow-y-auto overscroll-contain rounded-xl border border-cyan-400/20 bg-[#030711]/98 p-3 shadow-[0_12px_48px_-12px_rgba(0,0,0,0.85),0_0_40px_-12px_rgba(34,211,238,0.15)] backdrop-blur-lg"
         role="navigation"
         aria-label="Mobile site"
       >
+        <div className="mb-2 flex justify-end">
+          <button
+            type="button"
+            aria-label="Close menu"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 bg-white/[0.04] text-lg font-bold text-zinc-100 transition hover:border-cyan-400/35 hover:text-cyan-100"
+            onClick={closeMenu}
+          >
+            ×
+          </button>
+        </div>
         <nav className="flex flex-col gap-1" aria-label="Primary pages">
           {links.map(({ href, label }) => (
             <Link
@@ -71,6 +92,7 @@ export function NavbarMobileMenu({
                   : undefined
               }
               className="rounded-lg px-4 py-3.5 text-base font-bold uppercase tracking-wide text-zinc-100 transition hover:bg-cyan-500/10 hover:text-cyan-100"
+              onClick={closeMenu}
             >
               {label}
             </Link>
@@ -89,6 +111,7 @@ export function NavbarMobileMenu({
               <Link
                 href="/account/settings"
                 className="flex min-h-[48px] w-full items-center justify-center rounded-lg border border-white/12 bg-white/[0.05] text-sm font-bold uppercase tracking-wide text-zinc-100 transition hover:border-cyan-400/35"
+                onClick={closeMenu}
               >
                 Account
               </Link>
@@ -97,6 +120,7 @@ export function NavbarMobileMenu({
                   type="submit"
                   data-testid="nav-logout-mobile"
                   className="flex min-h-[48px] w-full items-center justify-center rounded-lg border border-white/12 bg-white/[0.04] text-sm font-bold uppercase tracking-wide text-zinc-100 transition hover:border-cyan-400/35"
+                  onClick={closeMenu}
                 >
                   Log out
                 </button>
@@ -108,6 +132,7 @@ export function NavbarMobileMenu({
                 data-testid="nav-login-mobile"
                 href="/login"
                 className="flex min-h-[48px] w-full items-center justify-center rounded-lg border border-white/15 text-sm font-bold uppercase tracking-wide text-zinc-100 transition hover:border-cyan-400/35"
+                onClick={closeMenu}
               >
                 Log in
               </Link>
@@ -115,6 +140,7 @@ export function NavbarMobileMenu({
                 data-testid="nav-signup-mobile"
                 href="/signup"
                 className={joinCtaBase}
+                onClick={closeMenu}
               >
                 Sign up
               </Link>

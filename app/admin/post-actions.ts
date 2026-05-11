@@ -12,6 +12,7 @@ import {
 import { validateAdminImageUpload } from "@/lib/storage/validate-admin-image-upload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveUniqueSlug, slugify } from "@/lib/posts/slug";
+import { normalizeRichTextForStorage } from "@/lib/content/rich-text-storage";
 import { fetchTagSlugsByIds, fetchTagSlugsForPostId } from "@/lib/tags/queries";
 import { readTagIdsFromFormData, syncPostTags } from "@/lib/tags/sync";
 import { revalidatePath } from "next/cache";
@@ -122,8 +123,8 @@ async function buildSectionPayload(
     const textKey = sectionTextFormName(n);
     const imgKey = sectionImageFormName(n);
     const videoKey = sectionVideoFormName(n);
-    const rawText = String(formData.get(textKey) ?? "").trim();
-    payload[textKey] = rawText.length ? rawText : null;
+    const rawText = String(formData.get(textKey) ?? "");
+    payload[textKey] = normalizeRichTextForStorage(rawText);
 
     const rawVideo = String(formData.get(videoKey) ?? "").trim();
     payload[videoKey] = rawVideo.length ? rawVideo : null;

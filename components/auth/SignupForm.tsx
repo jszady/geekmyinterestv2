@@ -49,7 +49,7 @@ export function SignupForm() {
           or
         </span>
       </div>
-      <form action={formAction} className="space-y-4" encType="multipart/form-data" aria-busy={pending}>
+      <form action={formAction} className="space-y-4" aria-busy={pending}>
         <SignupAvatarSelector disabled={pending} />
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-300" htmlFor="username">

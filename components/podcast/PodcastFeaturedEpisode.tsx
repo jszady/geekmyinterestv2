@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { looksLikeHtml, sanitizeRichHtml } from "@/lib/content/sanitize-rich-html";
 import type { PodcastEpisodeView } from "@/lib/podcast/data";
 
 const featuredPlatformLinks = [
@@ -29,6 +30,7 @@ export function PodcastFeaturedEpisode({
   episode: PodcastEpisodeView | null;
 }) {
   if (!episode) return null;
+  const hasRichSummary = looksLikeHtml(episode.summary);
 
   return (
     <section
@@ -79,9 +81,16 @@ export function PodcastFeaturedEpisode({
             <h3 className="text-2xl font-bold leading-snug tracking-tight text-white sm:text-3xl">
               {episode.title}
             </h3>
-            <p className="max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
-              {episode.summary}
-            </p>
+            {hasRichSummary ? (
+              <div
+                className="prose prose-invert max-w-2xl text-zinc-300 sm:text-lg"
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(episode.summary) }}
+              />
+            ) : (
+              <p className="max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg">
+                {episode.summary}
+              </p>
+            )}
             <div className="border-t border-white/[0.06] pt-4">
               <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-600">
                 Listen on

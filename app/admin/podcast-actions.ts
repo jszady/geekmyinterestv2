@@ -1,6 +1,7 @@
 "use server";
 
 import { evaluateAdminGate } from "@/lib/auth/admin-gate";
+import { normalizeRichTextForStorage } from "@/lib/content/rich-text-storage";
 import { getSessionUser } from "@/lib/auth/session";
 import type { PodcastEpisodeRow } from "@/lib/database.types";
 import { resolveUniquePodcastSlug, slugifyPodcast } from "@/lib/podcast/slug";
@@ -60,7 +61,7 @@ async function removeStoragePaths(
 function readPodcastForm(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const slugInput = String(formData.get("slug") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim() || null;
+  const description = normalizeRichTextForStorage(String(formData.get("description") ?? ""));
   const runtime = String(formData.get("runtime") ?? "").trim() || null;
   const status = String(formData.get("status") ?? "draft").trim();
   const youtube_url = String(formData.get("youtube_url") ?? "").trim() || null;

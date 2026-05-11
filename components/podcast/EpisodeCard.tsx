@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { looksLikeHtml, richHtmlToPlainText } from "@/lib/content/sanitize-rich-html";
 import type { PodcastEpisodeView } from "@/lib/podcast/data";
 
 type EpisodeCardProps = {
@@ -31,6 +32,10 @@ const platformLinks = [
 ] as const;
 
 export function EpisodeCard({ episode }: EpisodeCardProps) {
+  const summaryText = looksLikeHtml(episode.summary)
+    ? richHtmlToPlainText(episode.summary)
+    : episode.summary;
+
   return (
     <article className="group flex h-full flex-col rounded-xl border border-white/[0.07] bg-[#050a14]/80 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition duration-200 hover:border-cyan-400/25 hover:shadow-[0_0_32px_-10px_rgba(34,211,238,0.3)]">
       <div className="relative aspect-[16/10] w-full overflow-hidden rounded-t-xl border-b border-white/[0.06] bg-zinc-950">
@@ -52,7 +57,7 @@ export function EpisodeCard({ episode }: EpisodeCardProps) {
           {episode.title}
         </h3>
         <p className="line-clamp-3 flex-1 text-sm leading-relaxed text-zinc-400">
-          {episode.summary}
+          {summaryText}
         </p>
         <div className="flex flex-wrap gap-2">
           {(episode.tags ?? []).map((tag) => (

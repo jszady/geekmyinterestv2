@@ -4,6 +4,7 @@ import {
   createPodcastEpisodeAction,
   updatePodcastEpisodeAction,
 } from "@/app/admin/podcast-actions";
+import { AdminRichTextEditor } from "@/components/admin/AdminRichTextEditor";
 import type { PodcastEpisodeRow } from "@/lib/database.types";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect } from "react";
@@ -45,7 +46,6 @@ export function AdminPodcastForm(props: Props) {
   return (
     <form
       action={formAction}
-      encType="multipart/form-data"
       className="space-y-8"
       aria-busy={pending}
     >
@@ -131,12 +131,12 @@ export function AdminPodcastForm(props: Props) {
           <label className={labelClass} htmlFor="description">
             Description
           </label>
-          <textarea
+          <AdminRichTextEditor
             id="description"
             name="description"
-            rows={4}
             defaultValue={episode?.description ?? ""}
-            className={fieldClass}
+            placeholder="Episode description..."
+            minHeightClass="min-h-[180px]"
           />
         </div>
 

@@ -5,6 +5,7 @@ import {
   updatePostAction,
   type PostSaveResult,
 } from "@/app/admin/post-actions";
+import { AdminRichTextEditor } from "@/components/admin/AdminRichTextEditor";
 import { AdminPostTagPicker } from "@/components/admin/AdminPostTagPicker";
 import type { PostRow, TagRow } from "@/lib/database.types";
 import { postSectionIndices } from "@/lib/posts/section-fields";
@@ -60,7 +61,6 @@ export function AdminPostForm(props: Props) {
   return (
     <form
       action={formAction}
-      encType="multipart/form-data"
       className="space-y-8"
       aria-busy={pending}
     >
@@ -273,12 +273,12 @@ export function AdminPostForm(props: Props) {
                   <label className={labelClass} htmlFor={tk}>
                     Section {n} text
                   </label>
-                  <textarea
+                  <AdminRichTextEditor
                     id={tk}
                     name={tk}
-                    rows={5}
                     defaultValue={textDefault}
-                    className={fieldClass}
+                    placeholder={`Write section ${n} content...`}
+                    minHeightClass="min-h-[200px]"
                   />
                 </div>
                 <div>

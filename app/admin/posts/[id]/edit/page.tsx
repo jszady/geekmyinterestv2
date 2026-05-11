@@ -28,12 +28,21 @@ export default async function EditPostPage({ params }: { params: Promise<Params>
           </Link>
           <h2 className="mt-2 text-xl font-bold text-white">Edit post</h2>
         </div>
-        <Link
-          href={`/articles/${post.slug}`}
-          className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
-        >
-          View live →
-        </Link>
+        {post.status === "published" ? (
+          <Link
+            href={`/articles/${post.slug}`}
+            className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
+          >
+            View live →
+          </Link>
+        ) : (
+          <Link
+            href={`/admin/posts/${post.id}/preview`}
+            className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
+          >
+            Preview →
+          </Link>
+        )}
       </div>
       <div className="flex flex-wrap items-center gap-3 rounded-lg border border-white/[0.08] bg-[#050a14]/60 px-4 py-3 text-sm text-zinc-300">
         <UserAvatar

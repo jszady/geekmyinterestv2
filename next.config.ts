@@ -53,14 +53,12 @@ const connectSrc = [
   ...(supabaseHostname ? [`https://${supabaseHostname}`, `wss://${supabaseHostname}`] : []),
 ].join(" ");
 
-// Build img-src: allow self, data URIs, blobs, Supabase storage, Unsplash, Google avatars.
+// Build img-src: allow self, data URIs, blobs, and HTTPS image origins.
 const imgSrc = [
   "'self'",
   "data:",
   "blob:",
-  "https://*.supabase.co",
-  "https://images.unsplash.com",
-  "https://lh3.googleusercontent.com",
+  "https:",
 ].join(" ");
 
 // CSP notes:
@@ -71,7 +69,7 @@ const imgSrc = [
 //   a hard-to-debug breakage if any third-party library relies on it. Remove it once
 //   you have confirmed production works without it.
 // - style-src includes 'unsafe-inline' because Tailwind + Next.js both inject inline styles.
-// - frame-src allows accounts.google.com for the Google OAuth popup flow.
+// - frame-src allows Google OAuth popup and YouTube embeds.
 // - frame-ancestors 'none' prevents the site from being embedded in any iframe.
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -80,7 +78,7 @@ const contentSecurityPolicy = [
   `img-src ${imgSrc}`,
   "font-src 'self' data:",
   `connect-src ${connectSrc}`,
-  "frame-src https://accounts.google.com",
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

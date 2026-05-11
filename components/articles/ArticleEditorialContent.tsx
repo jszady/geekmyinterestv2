@@ -5,6 +5,7 @@ import {
   postHasEditorialSections,
   postSectionIndices,
 } from "@/lib/posts/section-fields";
+import { looksLikeHtml, sanitizeRichHtml } from "@/lib/content/sanitize-rich-html";
 import { renderSectionTextWithMarkdown } from "@/lib/posts/section-text-markdown";
 import Image from "next/image";
 
@@ -42,10 +43,14 @@ async function EditorialSections({ post }: Props) {
         className="mt-10 space-y-6 border-t border-white/[0.06] pt-10 first:mt-8 first:border-0 first:pt-0"
       >
         {textStr ? (
-          <div className="prose prose-invert max-w-none">
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
-              {renderSectionTextWithMarkdown(textStr)}
-            </p>
+          <div className="prose prose-invert max-w-none text-zinc-200">
+            {looksLikeHtml(textStr) ? (
+              <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(textStr) }} />
+            ) : (
+              <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
+                {renderSectionTextWithMarkdown(textStr)}
+              </p>
+            )}
           </div>
         ) : null}
         {imgUrl ? (

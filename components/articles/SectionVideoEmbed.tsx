@@ -1,4 +1,8 @@
-import { parseYouTubeVideoId, safeHttpUrl } from "@/lib/posts/section-video";
+import {
+  isYouTubeHost,
+  safeHttpUrl,
+  toYouTubeEmbedUrl,
+} from "@/lib/posts/section-video";
 
 type Props = { url: string; sectionIndex: number };
 
@@ -12,19 +16,20 @@ export function SectionVideoEmbed({ url, sectionIndex }: Props) {
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  const ytId = parseYouTubeVideoId(trimmed);
-  if (ytId) {
-    const src = `https://www.youtube-nocookie.com/embed/${ytId}?rel=0`;
+  const src = toYouTubeEmbedUrl(trimmed);
+  if (src) {
+    // Debug-safe guard: only allow canonical embed URLs.
+    if (!src.startsWith("https://www.youtube.com/embed/")) return null;
     return (
       <div
         className="relative w-full overflow-hidden rounded-xl border border-white/[0.08] bg-black shadow-[0_0_28px_-12px_rgba(34,211,238,0.4)]"
         data-article-section-video={sectionIndex}
       >
-        <div className="relative aspect-video w-full max-w-full">
+        <div className="relative w-full max-w-full" style={{ aspectRatio: "16 / 9" }}>
           <iframe
             className="absolute inset-0 h-full w-full border-0"
             src={src}
-            title="Embedded YouTube video"
+            title="YouTube video player"
             allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             loading="lazy"
@@ -34,6 +39,9 @@ export function SectionVideoEmbed({ url, sectionIndex }: Props) {
       </div>
     );
   }
+
+  // Prevent broken/blank YouTube iframes from invalid IDs/watch links.
+  if (isYouTubeHost(trimmed)) return null;
 
   const href = safeHttpUrl(trimmed);
   if (!href) return null;

@@ -3,6 +3,7 @@ import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
 import { Navbar } from "@/components/layout/Navbar";
 import { postRowToCardData } from "@/lib/posts/map-row-to-card";
 import { searchPublishedPostRows } from "@/lib/posts/search-published";
+import { Search } from "lucide-react";
 import type { Metadata } from "next";
 
 type PageProps = {
@@ -42,6 +43,18 @@ export default async function SearchPage({ searchParams }: PageProps) {
               "Search articles"
             )}
           </h1>
+          <form action="/search" method="get" className="relative mt-4 max-w-xl">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">
+              <Search className="h-5 w-5" strokeWidth={2} />
+            </span>
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder="Search articles..."
+              className="w-full rounded-lg border border-white/[0.1] bg-[#050a14]/95 py-2.5 pl-11 pr-10 text-sm text-zinc-100 shadow-inner shadow-black/30 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/45 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.12)]"
+            />
+          </form>
           {q.length > 0 && q.length < 2 ? (
             <p className="mt-2 text-sm text-zinc-500">Enter at least 2 characters to search.</p>
           ) : null}

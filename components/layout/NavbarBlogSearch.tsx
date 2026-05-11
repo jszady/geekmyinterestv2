@@ -1,6 +1,7 @@
 "use client";
 
 import type { PostCardData } from "@/components/feed/types";
+import { Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,17 +17,6 @@ function previewText(post: PostCardData, max: number): string {
   const ex = post.excerpt?.trim();
   if (ex) return ex.length <= max ? ex : `${ex.slice(0, max)}…`;
   return post.title.length <= max ? post.title : `${post.title.slice(0, max)}…`;
-}
-
-function IconSearchGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <path
-        fill="currentColor"
-        d="M10.5 3a7.5 7.5 0 1 1 4.73 13.32l4.23 4.24-1.24 1.24-4.24-4.23A7.5 7.5 0 0 1 10.5 3Zm0 1.75a5.75 5.75 0 1 0 0 11.5 5.75 5.75 0 0 0 0-11.5Z"
-      />
-    </svg>
-  );
 }
 
 export type NavbarBlogSearchProps = {
@@ -186,7 +176,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
   }, [results]);
 
   const inputClass =
-    "w-full rounded-lg border border-white/[0.1] bg-[#050a14]/95 py-2 pl-9 pr-10 text-xs text-zinc-100 shadow-inner shadow-black/30 outline-none transition placeholder:text-zinc-600 focus:border-cyan-400/45 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.12)] sm:text-sm";
+    "w-full rounded-lg border border-white/[0.1] bg-[#050a14]/95 py-2.5 pl-11 pr-10 text-xs text-zinc-100 shadow-inner shadow-black/30 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/45 focus:shadow-[0_0_0_2px_rgba(34,211,238,0.12)] sm:text-sm";
 
   function renderDropdownBody() {
     return (
@@ -290,7 +280,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
           onClick={togglePopover}
           className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/[0.12] bg-white/[0.02] text-zinc-400 transition hover:border-cyan-400/35 hover:text-cyan-100"
         >
-          <IconSearchGlyph className="h-4 w-4" />
+          <Search className="h-[18px] w-[18px]" strokeWidth={2} />
         </button>
         {panelOpen && popoverStyle ? (
           <div
@@ -303,13 +293,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
           >
             <div className="relative shrink-0">
               <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path
-                    d="M10.5 3a7.5 7.5 0 1 1 4.73 13.32l4.23 4.24-1.24 1.24-4.24-4.23A7.5 7.5 0 0 1 10.5 3Z"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                </svg>
+                <Search className="h-5 w-5" strokeWidth={2} />
               </span>
               <input
                 type="search"
@@ -355,13 +339,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
     >
       <div className="relative">
         <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 sm:left-3">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="sm:h-[18px] sm:w-[18px]" aria-hidden>
-            <path
-              d="M10.5 3a7.5 7.5 0 1 1 4.73 13.32l4.23 4.24-1.24 1.24-4.24-4.23A7.5 7.5 0 0 1 10.5 3Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-            />
-          </svg>
+          <Search className="h-5 w-5" strokeWidth={2} />
         </span>
         <input
           type="search"
@@ -374,7 +352,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
           onKeyDown={onKeyDown}
           placeholder="Search articles..."
           autoComplete="off"
-          className={inputClass + " py-2.5 pl-9 sm:pl-10"}
+          className={inputClass}
         />
         {value ? (
           <button

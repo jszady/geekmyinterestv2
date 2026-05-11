@@ -27,12 +27,21 @@ export default async function EditPodcastEpisodePage({
           </Link>
           <h2 className="mt-2 text-xl font-bold text-white">Edit podcast episode</h2>
         </div>
-        <Link
-          href="/podcast"
-          className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
-        >
-          View podcast page →
-        </Link>
+        {episode.status === "published" ? (
+          <Link
+            href="/podcast"
+            className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
+          >
+            View live →
+          </Link>
+        ) : (
+          <Link
+            href={`/admin/podcasts/${episode.id}/preview`}
+            className="text-sm font-semibold text-zinc-400 hover:text-cyan-200"
+          >
+            Preview →
+          </Link>
+        )}
       </div>
       <AdminPodcastForm mode="edit" episode={episode} />
       <AdminDeletePodcastButton episodeId={episode.id} title={episode.title} />

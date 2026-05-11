@@ -25,7 +25,7 @@ export function parseYouTubeVideoId(raw: string): string | null {
     host === "youtube.com" ||
     host === "m.youtube.com" ||
     host === "music.youtube.com" ||
-    host === "www.youtube-nocookie.com"
+    host === "youtube-nocookie.com"
   ) {
     if (u.pathname.startsWith("/shorts/")) {
       const id = u.pathname.slice("/shorts/".length).split("/")[0] ?? "";
@@ -40,6 +40,31 @@ export function parseYouTubeVideoId(raw: string): string | null {
   }
 
   return null;
+}
+
+export function isYouTubeHost(raw: string): boolean {
+  const s = raw.trim();
+  if (!s) return false;
+  let u: URL;
+  try {
+    u = new URL(/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(s) ? s : `https://${s}`);
+  } catch {
+    return false;
+  }
+  const host = u.hostname.replace(/^www\./i, "").toLowerCase();
+  return (
+    host === "youtu.be" ||
+    host === "youtube.com" ||
+    host === "m.youtube.com" ||
+    host === "music.youtube.com" ||
+    host === "youtube-nocookie.com"
+  );
+}
+
+export function toYouTubeEmbedUrl(raw: string): string | null {
+  const id = parseYouTubeVideoId(raw);
+  if (!id) return null;
+  return `https://www.youtube.com/embed/${id}`;
 }
 
 /** Only allow http(s) links for external “Watch clip” cards. */
