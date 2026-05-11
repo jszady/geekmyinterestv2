@@ -40,6 +40,10 @@ export function sanitizeRichHtml(input: string): string {
       h5: ["style"],
       h6: ["style"],
       img: ["src", "alt"],
+      ol: ["start", "type"],
+      ul: ["style"],
+      li: ["style"],
+      br: ["class"],
     },
     allowedSchemes: ["http", "https", "mailto"],
     transformTags: {
@@ -50,7 +54,12 @@ export function sanitizeRichHtml(input: string): string {
     },
     allowedStyles: {
       "*": {
-        color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\((\s*\d+\s*,){2}\s*\d+\s*\)$/],
+        color: [
+          /^#[0-9a-fA-F]{3,8}$/,
+          /^rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)$/,
+          /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[\d.]+\s*\)$/,
+          /^hsl\(\s*\d+\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*\)$/,
+        ],
         "font-size": [/^\d+(?:px|rem|em|%)$/],
         "text-align": [/^(left|right|center|justify)$/],
       },

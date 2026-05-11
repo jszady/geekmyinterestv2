@@ -17,9 +17,6 @@ const articleSectionMediaFrame =
 
 const articleSectionAspect = "aspect-[4/3] w-full";
 
-const richHtmlFigureClass =
-  "[&_img]:mx-auto [&_img]:my-4 [&_img]:block [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:border [&_img]:border-white/[0.08] [&_img]:bg-[#0a1428]/80";
-
 /**
  * Renders sections 1–15 (text → image → video per section) or legacy body_part / inline_image.
  */
@@ -72,18 +69,17 @@ async function EditorialSections({ post }: Props) {
         ) : null}
         {topVideoRaw ? <SectionVideoEmbed url={topVideoRaw} sectionIndex={n} /> : null}
         {textStr ? (
-          <div className="prose prose-invert max-w-none text-zinc-200">
-            {looksLikeHtml(textStr) ? (
-              <div
-                className={`max-w-none text-zinc-200 ${richHtmlFigureClass}`}
-                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(textStr) }}
-              />
-            ) : (
-              <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
-                {renderSectionTextWithMarkdown(textStr)}
-              </p>
-            )}
-          </div>
+          looksLikeHtml(textStr) ? (
+            <div
+              className="article-rich-body max-w-none"
+              data-article-rich-text={n}
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(textStr) }}
+            />
+          ) : (
+            <div className="max-w-none text-base leading-relaxed text-zinc-200">
+              <p className="whitespace-pre-wrap">{renderSectionTextWithMarkdown(textStr)}</p>
+            </div>
+          )
         ) : null}
         {imgUrl ? (
           <div
@@ -115,10 +111,17 @@ async function LegacyArticleBody({ post }: Props) {
   return (
     <div data-article-mode="legacy">
       {post.body_part_1 ? (
-        <div className="prose prose-invert mt-10 max-w-none" data-legacy-part="body1">
-          <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
-            {post.body_part_1}
-          </p>
+        <div className="mt-10 max-w-none" data-legacy-part="body1">
+          {looksLikeHtml(post.body_part_1) ? (
+            <div
+              className="article-rich-body max-w-none"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(post.body_part_1) }}
+            />
+          ) : (
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
+              {post.body_part_1}
+            </p>
+          )}
         </div>
       ) : null}
 
@@ -137,10 +140,17 @@ async function LegacyArticleBody({ post }: Props) {
       ) : null}
 
       {post.body_part_2 ? (
-        <div className="prose prose-invert mt-10 max-w-none" data-legacy-part="body2">
-          <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
-            {post.body_part_2}
-          </p>
+        <div className="mt-10 max-w-none" data-legacy-part="body2">
+          {looksLikeHtml(post.body_part_2) ? (
+            <div
+              className="article-rich-body max-w-none"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(post.body_part_2) }}
+            />
+          ) : (
+            <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
+              {post.body_part_2}
+            </p>
+          )}
         </div>
       ) : null}
     </div>

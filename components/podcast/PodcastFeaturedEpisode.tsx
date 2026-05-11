@@ -83,7 +83,7 @@ export function PodcastFeaturedEpisode({
             </h3>
             {hasRichSummary ? (
               <div
-                className="prose prose-invert max-w-2xl text-zinc-300 sm:text-lg"
+                className="article-rich-body max-w-2xl text-zinc-300 sm:text-lg"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(episode.summary) }}
               />
             ) : (

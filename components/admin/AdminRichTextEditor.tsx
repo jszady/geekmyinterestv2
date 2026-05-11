@@ -15,11 +15,32 @@ const TOOLBAR_BTN =
 const TOOLBAR_BTN_ACTIVE =
   "border-cyan-400/55 bg-cyan-500/15 text-cyan-100";
 
+function escapeHtmlText(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/**
+ * Convert plain-text legacy content to HTML for loading into Tiptap.
+ * - Double newline → new <p> (paragraph spacing)
+ * - Single newline → <br> (tight line break)
+ * If the value is already HTML, return as-is.
+ */
 function asHtmlValue(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
   if (/<[a-z][\s\S]*>/i.test(trimmed)) return trimmed;
-  return `<p>${trimmed.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`;
+  const blocks = trimmed.split(/\n(?:\s*\n)+/).map((b) => b.trim()).filter(Boolean);
+  if (blocks.length === 0) return "";
+  return blocks
+    .map((block) => {
+      const inner = block.split(/\n/).map((line) => escapeHtmlText(line)).join("<br>");
+      return `<p>${inner}</p>`;
+    })
+    .join("");
 }
 
 type Props = {
@@ -44,6 +65,8 @@ export function AdminRichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4] },
+        // HardBreak is included in StarterKit: Shift+Enter inserts <br>
+        // Default Enter behaviour: new paragraph
       }),
       Underline,
       Link.configure({
@@ -61,7 +84,7 @@ export function AdminRichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert max-w-none focus:outline-none text-zinc-100 text-sm leading-relaxed",
+          "article-rich-body max-w-none focus:outline-none text-sm text-zinc-100 leading-relaxed",
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -95,23 +118,16 @@ export function AdminRichTextEditor({
     editor.chain().focus().setImage({ src: trimmed }).run();
   };
 
-  const setFontSize = (size: string) => {
-    if (!editor) return;
-    if (!size) {
-      editor.chain().focus().setMark("textStyle", { fontSize: null }).run();
-      return;
-    }
-    editor.chain().focus().setMark("textStyle", { fontSize: `${size}px` }).run();
-  };
-
-  const currentSizeRaw = editor?.getAttributes("textStyle").fontSize as string | undefined;
-  const currentSize = currentSizeRaw ? currentSizeRaw.replace("px", "") : "";
   const currentColor = (editor?.getAttributes("textStyle").color as string | undefined) ?? "#ffffff";
 
   return (
     <div className="mt-1 rounded-lg border border-white/10 bg-[#050a14]">
       <input type="hidden" id={id} name={name} value={html} />
 
+      <p className="border-b border-white/10 px-2 py-1.5 text-[11px] text-zinc-500">
+        <span className="text-zinc-400">Shift+Enter</span> tight line break ·{" "}
+        <span className="text-zinc-400">Enter</span> new paragraph.
+      </p>
       <div className="flex flex-wrap gap-1 border-b border-white/10 p-2">
         <button
           type="button"
@@ -195,22 +211,6 @@ export function AdminRichTextEditor({
         <button type="button" className={TOOLBAR_BTN} onClick={() => editor?.chain().focus().setTextAlign("right").run()}>
           Right
         </button>
-        <label className="ml-1 flex items-center gap-1 text-xs text-zinc-400">
-          Size
-          <select
-            className="rounded border border-white/15 bg-[#02040d] px-1 py-1 text-xs text-zinc-100"
-            value={currentSize}
-            onChange={(e) => setFontSize(e.target.value)}
-          >
-            <option value="">Default</option>
-            <option value="12">12</option>
-            <option value="14">14</option>
-            <option value="16">16</option>
-            <option value="18">18</option>
-            <option value="22">22</option>
-            <option value="28">28</option>
-          </select>
-        </label>
         <label className="ml-1 flex items-center gap-1 text-xs text-zinc-400">
           Color
           <input
