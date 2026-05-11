@@ -8,7 +8,10 @@ import {
   validateDisplayUsername,
 } from "@/lib/auth/display-username";
 import { ensureProfileRowForUser } from "@/lib/auth/ensure-profile";
-import { parseSignupAvatarFromForm } from "@/lib/profile/signup-avatar";
+import {
+  avatarFromSignupMetadata,
+  parseSignupAvatarFromForm,
+} from "@/lib/profile/signup-avatar";
 import { uploadProfileAvatarForNewUser } from "@/lib/profile/signup-storage-avatar";
 import { revalidatePath } from "next/cache";
 import { getPublicSiteUrl } from "@/lib/site-public-url";
@@ -255,7 +258,7 @@ export async function completeProfileAction(
   const normalized = normalizeDisplayUsername(submitted);
   const validated = validateDisplayUsername(normalized);
   if (!validated.ok) {
-    return { ok: false, error: validated.error };
+    return { ok: false, error: validated.error, reason: "validation" };
   }
   const cleaned = validated.username;
 
@@ -264,9 +267,32 @@ export async function completeProfileAction(
     data: { user },
     error: authError,
   } = await supabase.auth.getUser();
+  const userIdPresent = Boolean(user?.id);
   if (authError || !user) {
+    console.info("[complete-profile]", {
+      userIdPresent,
+      profileRowFound: null,
+      path: "none",
+      message: "no session user",
+    });
     return { ok: false, error: "You must be logged in." };
   }
+
+  const { data: selfProfile, error: selfProfileError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (selfProfileError) {
+    console.error("[complete-profile] self profile select error", {
+      code: selfProfileError.code,
+      message: selfProfileError.message,
+    });
+    return { ok: false, error: selfProfileError.message };
+  }
+
+  const profileRowFound = Boolean(selfProfile?.id);
 
   const { data: existingRows, error: existingError } = await supabase
     .from("profiles")
@@ -275,42 +301,103 @@ export async function completeProfileAction(
     .neq("id", user.id)
     .limit(1);
   if (existingError) {
-    console.error("[complete-profile] uniqueness check error", existingError);
+    console.error("[complete-profile] uniqueness check error", {
+      code: existingError.code,
+      message: existingError.message,
+    });
     return { ok: false, error: existingError.message };
   }
   if ((existingRows ?? []).length > 0) {
-    return { ok: false, error: "Username already taken" };
-  }
-
-  const { data: updatedRow, error: updateError } = await supabase
-    .from("profiles")
-    .update({ username: cleaned })
-    .eq("id", user.id)
-    .select("id, username")
-    .maybeSingle();
-
-  if (updateError) {
-    console.error("[complete-profile] update error", updateError);
-    if (
-      updateError.message.toLowerCase().includes("duplicate") ||
-      updateError.code === "23505"
-    ) {
-      return { ok: false, error: "Username already taken" };
-    }
-    return { ok: false, error: updateError.message };
-  }
-  if (!updatedRow) {
-    console.error(
-      "[complete-profile] update returned no row; possible missing profile row or RLS denial",
-      { userId: user.id, cleanedUsername: cleaned },
-    );
     return {
       ok: false,
-      error:
-        "Could not update profile. Please verify your profile row exists and RLS allows update.",
+      error: "Username already taken",
+      reason: "duplicate_username",
     };
   }
 
+  const meta = user.user_metadata as Record<string, unknown> | undefined;
+  const avatarUrl =
+    avatarFromSignupMetadata(meta) ?? parseSignupAvatarFromForm(formData);
+
+  if (!profileRowFound) {
+    console.info("[complete-profile]", {
+      userIdPresent,
+      profileRowFound: false,
+      path: "insert",
+      usernameLen: cleaned.length,
+    });
+
+    const insertRow = {
+      id: user.id,
+      email: user.email ?? null,
+      username: cleaned,
+      role: "user" as const,
+      avatar_url: avatarUrl,
+    };
+
+    const { error: insertError } = await supabase.from("profiles").insert(insertRow);
+
+    if (insertError) {
+      console.error("[complete-profile] insert error", {
+        code: insertError.code,
+        message: insertError.message,
+      });
+      if (
+        insertError.code === "23505" ||
+        insertError.message.toLowerCase().includes("duplicate")
+      ) {
+        return {
+          ok: false,
+          error: "Username already taken",
+          reason: "duplicate_username",
+        };
+      }
+      return { ok: false, error: insertError.message };
+    }
+  } else {
+    console.info("[complete-profile]", {
+      userIdPresent,
+      profileRowFound: true,
+      path: "update",
+      usernameLen: cleaned.length,
+    });
+
+    const { data: updatedRow, error: updateError } = await supabase
+      .from("profiles")
+      .update({ username: cleaned })
+      .eq("id", user.id)
+      .select("id, username")
+      .maybeSingle();
+
+    if (updateError) {
+      console.error("[complete-profile] update error", {
+        code: updateError.code,
+        message: updateError.message,
+      });
+      if (
+        updateError.message.toLowerCase().includes("duplicate") ||
+        updateError.code === "23505"
+      ) {
+        return {
+          ok: false,
+          error: "Username already taken",
+          reason: "duplicate_username",
+        };
+      }
+      return { ok: false, error: updateError.message };
+    }
+    if (!updatedRow) {
+      console.error("[complete-profile] update returned no row", {
+        userId: user.id,
+      });
+      return {
+        ok: false,
+        error: "Could not update profile. Please try again.",
+      };
+    }
+  }
+
   revalidatePath("/", "layout");
-  return { ok: true, error: null };
+  revalidatePath("/complete-profile");
+  return { ok: true, error: null, reason: null };
 }
