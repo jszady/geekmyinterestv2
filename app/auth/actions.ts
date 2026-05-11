@@ -2,6 +2,11 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/admin";
+import {
+  displayUsernameIlikePattern,
+  normalizeDisplayUsername,
+  validateDisplayUsername,
+} from "@/lib/auth/display-username";
 import { ensureProfileRowForUser } from "@/lib/auth/ensure-profile";
 import { parseSignupAvatarFromForm } from "@/lib/profile/signup-avatar";
 import { uploadProfileAvatarForNewUser } from "@/lib/profile/signup-storage-avatar";
@@ -22,31 +27,31 @@ export async function signUpAction(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const submittedUsername = String(formData.get("username") ?? "");
-  const username = submittedUsername.trim().toLowerCase().replace(/\s+/g, "-");
-
-  if (!email || !password || !username) {
+  const normalizedUsername = normalizeDisplayUsername(submittedUsername);
+  const usernameCheck = validateDisplayUsername(normalizedUsername);
+  if (!usernameCheck.ok) {
     return {
       ok: false,
-      error: "Email, password, and username are required.",
+      error: usernameCheck.error,
       reason: "validation",
     };
   }
-  if (!/^[a-z0-9_-]+$/.test(username)) {
+  const username = usernameCheck.username;
+
+  if (!email || !password) {
     return {
       ok: false,
-      error:
-        "Username must use lowercase letters, numbers, hyphens, or underscores.",
+      error: "Email and password are required.",
       reason: "validation",
     };
   }
 
   const supabase = await createSupabaseServerClient();
-  const escapeLikePattern = (value: string) => value.replace(/[%_]/g, "\\$&");
 
   const { data: takenUsernameRows, error: usernameCheckError } = await supabase
     .from("profiles")
     .select("id, username")
-    .ilike("username", escapeLikePattern(username))
+    .ilike("username", displayUsernameIlikePattern(username))
     .limit(1);
   if (usernameCheckError) {
     console.error("[signup] username check error:", usernameCheckError);
@@ -247,16 +252,12 @@ export async function completeProfileAction(
   formData: FormData,
 ): Promise<AuthActionState> {
   const submitted = String(formData.get("username") ?? "");
-  const cleaned = submitted.trim().toLowerCase().replace(/\s+/g, "-");
-
-  if (!cleaned) return { ok: false, error: "Username is required." };
-  if (!/^[a-z0-9_-]+$/.test(cleaned)) {
-    return {
-      ok: false,
-      error:
-        "Use only lowercase letters, numbers, hyphens, or underscores.",
-    };
+  const normalized = normalizeDisplayUsername(submitted);
+  const validated = validateDisplayUsername(normalized);
+  if (!validated.ok) {
+    return { ok: false, error: validated.error };
   }
+  const cleaned = validated.username;
 
   const supabase = await createSupabaseServerClient();
   const {
@@ -270,7 +271,7 @@ export async function completeProfileAction(
   const { data: existingRows, error: existingError } = await supabase
     .from("profiles")
     .select("id, username")
-    .eq("username", cleaned)
+    .ilike("username", displayUsernameIlikePattern(cleaned))
     .neq("id", user.id)
     .limit(1);
   if (existingError) {

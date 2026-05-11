@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  DISPLAY_USERNAME_MAX_LENGTH,
+  DISPLAY_USERNAME_MIN_LENGTH,
+  displayUsernameIlikePattern,
+  normalizeDisplayUsername,
+  validateDisplayUsername,
+} from "@/lib/auth/display-username";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,14 +16,6 @@ export function CompleteProfileForm() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function cleanUsername(input: string): string {
-    return input.trim().toLowerCase().replace(/\s+/g, "-");
-  }
-
-  function escapeLikePattern(value: string): string {
-    return value.replace(/[%_]/g, "\\$&");
-  }
-
   async function onSubmit(e: { preventDefault(): void; currentTarget: HTMLFormElement | null }) {
     e.preventDefault();
     setPending(true);
@@ -24,18 +23,14 @@ export function CompleteProfileForm() {
 
     const form = new FormData(e.currentTarget ?? undefined);
     const submitted = String(form.get("username") ?? "");
-    const cleaned = cleanUsername(submitted);
-
-    if (!cleaned) {
-      setError("Username is required.");
+    const normalized = normalizeDisplayUsername(submitted);
+    const validated = validateDisplayUsername(normalized);
+    if (!validated.ok) {
+      setError(validated.error);
       setPending(false);
       return;
     }
-    if (!/^[a-z0-9_-]+$/.test(cleaned)) {
-      setError("Use only lowercase letters, numbers, hyphens, or underscores.");
-      setPending(false);
-      return;
-    }
+    const cleaned = validated.username;
 
     const supabase = createSupabaseBrowserClient();
     const {
@@ -61,7 +56,7 @@ export function CompleteProfileForm() {
       return;
     }
 
-    const duplicatePattern = escapeLikePattern(cleaned);
+    const duplicatePattern = displayUsernameIlikePattern(cleaned);
     const { data: duplicateRows, error: duplicateError } = await supabase
       .from("profiles")
       .select("id, username")
@@ -126,13 +121,15 @@ export function CompleteProfileForm() {
             type="text"
             autoComplete="username"
             required
-            minLength={2}
-            placeholder="your-name"
+            minLength={DISPLAY_USERNAME_MIN_LENGTH}
+            maxLength={DISPLAY_USERNAME_MAX_LENGTH}
+            placeholder="Your name"
             disabled={pending}
             className="w-full rounded-lg border border-white/10 bg-[#050a14] px-3 py-2.5 text-zinc-100 outline-none ring-cyan-400/40 focus:border-cyan-400/40 focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
           <p className="mt-2 text-xs text-zinc-500">
-            Lowercase only, no spaces. Use dashes between words.
+            {DISPLAY_USERNAME_MIN_LENGTH}–{DISPLAY_USERNAME_MAX_LENGTH} characters. Letters, numbers, and
+            spaces; multiple spaces are collapsed.
           </p>
         </div>
         <button
