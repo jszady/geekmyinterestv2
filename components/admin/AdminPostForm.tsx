@@ -8,9 +8,16 @@ import {
 import { AdminRichTextEditor } from "@/components/admin/AdminRichTextEditor";
 import { AdminPostTagPicker } from "@/components/admin/AdminPostTagPicker";
 import type { PostRow, TagRow } from "@/lib/database.types";
-import { postSectionIndices } from "@/lib/posts/section-fields";
+import {
+  postSectionIndices,
+  sectionTopImageFormName,
+  sectionTopVideoFormName,
+  sectionTextFormName,
+  sectionImageFormName,
+  sectionVideoFormName,
+} from "@/lib/posts/section-fields";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 
 const CATEGORIES = ["Movie", "Anime", "Show", "Game", "Tech"] as const;
 const STATUSES = ["draft", "published"] as const;
@@ -57,6 +64,13 @@ export function AdminPostForm(props: Props) {
       router.refresh();
     }
   }, [state, router, props.mode]);
+
+  const initialClears = useMemo<Record<string, boolean>>(() => ({}), []);
+  const [clearFlags, setClearFlags] = useState<Record<string, boolean>>(initialClears);
+
+  function toggleClear(fieldName: string) {
+    setClearFlags((prev) => ({ ...prev, [fieldName]: !prev[fieldName] }));
+  }
 
   return (
     <form
@@ -255,13 +269,19 @@ export function AdminPostForm(props: Props) {
           X posts, and other links show a “Watch clip” button.
         </p>
         {postSectionIndices().map((n) => {
-          const tk = `section_${n}_text`;
-          const ik = `section_${n}_image`;
-          const vk = `section_${n}_video_url`;
+          const tk = sectionTextFormName(n);
+          const ikTop = sectionTopImageFormName(n);
+          const vkTop = sectionTopVideoFormName(n);
+          const ikBottom = sectionImageFormName(n);
+          const vkBottom = sectionVideoFormName(n);
           const pr = post as Record<string, string | null | undefined> | null;
           const textDefault = pr?.[tk] ?? "";
-          const pathDefault = pr?.[ik] ?? null;
-          const videoDefault = pr?.[vk] ?? "";
+          const topPathDefault = pr?.[ikTop] ?? null;
+          const topVideoDefault = pr?.[vkTop] ?? "";
+          const bottomPathDefault = pr?.[ikBottom] ?? null;
+          const bottomVideoDefault = pr?.[vkBottom] ?? "";
+          const clearTop = !!clearFlags[ikTop];
+          const clearBottom = !!clearFlags[ikBottom];
           return (
             <div
               key={n}
@@ -269,6 +289,49 @@ export function AdminPostForm(props: Props) {
             >
               <h3 className="mb-3 text-sm font-semibold text-cyan-200/90">Section {n}</h3>
               <div className="space-y-4">
+                <div>
+                  <span className={labelClass}>Top image</span>
+                  <input
+                    type="hidden"
+                    name={`clear_${ikTop}`}
+                    value={clearTop ? "1" : "0"}
+                  />
+                  <input
+                    name={ikTop}
+                    type="file"
+                    accept="image/*"
+                    className="mt-2 block w-full text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
+                  />
+                  {topPathDefault ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <p className="break-all text-[11px] text-zinc-500">
+                        Current: {topPathDefault}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleClear(ikTop)}
+                        className="rounded border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+                      >
+                        {clearTop ? "Undo clear" : "Clear image"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor={vkTop}>
+                    Top video / trailer URL (optional)
+                  </label>
+                  <input
+                    id={vkTop}
+                    name={vkTop}
+                    type="text"
+                    inputMode="url"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    defaultValue={topVideoDefault}
+                    className={fieldClass}
+                    autoComplete="off"
+                  />
+                </div>
                 <div>
                   <label className={labelClass} htmlFor={tk}>
                     Section {n} text
@@ -282,28 +345,44 @@ export function AdminPostForm(props: Props) {
                   />
                 </div>
                 <div>
-                  <span className={labelClass}>Section {n} image</span>
+                  <span className={labelClass}>Bottom image</span>
                   <input
-                    name={ik}
+                    type="hidden"
+                    name={`clear_${ikBottom}`}
+                    value={clearBottom ? "1" : "0"}
+                  />
+                  <input
+                    name={ikBottom}
                     type="file"
                     accept="image/*"
                     className="mt-2 block w-full text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
                   />
-                  {pathDefault ? (
-                    <p className="mt-1 break-all text-[11px] text-zinc-500">Current: {pathDefault}</p>
+                  {bottomPathDefault ? (
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <p className="break-all text-[11px] text-zinc-500">
+                        Current: {bottomPathDefault}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => toggleClear(ikBottom)}
+                        className="rounded border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+                      >
+                        {clearBottom ? "Undo clear" : "Clear image"}
+                      </button>
+                    </div>
                   ) : null}
                 </div>
                 <div>
-                  <label className={labelClass} htmlFor={vk}>
-                    Video / trailer URL (optional)
+                  <label className={labelClass} htmlFor={vkBottom}>
+                    Bottom video / trailer URL (optional)
                   </label>
                   <input
-                    id={vk}
-                    name={vk}
+                    id={vkBottom}
+                    name={vkBottom}
                     type="text"
                     inputMode="url"
                     placeholder="https://www.youtube.com/watch?v=…"
-                    defaultValue={videoDefault}
+                    defaultValue={bottomVideoDefault}
                     className={fieldClass}
                     autoComplete="off"
                   />

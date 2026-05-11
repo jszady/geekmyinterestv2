@@ -1,0 +1,35 @@
+-- 014: Add optional "top media" columns for editorial sections.
+-- Existing section_{n}_image and section_{n}_video_url remain as bottom media
+-- for backward compatibility.
+
+alter table public.posts
+  add column if not exists section_1_image_top text,
+  add column if not exists section_1_video_url_top text,
+  add column if not exists section_2_image_top text,
+  add column if not exists section_2_video_url_top text,
+  add column if not exists section_3_image_top text,
+  add column if not exists section_3_video_url_top text,
+  add column if not exists section_4_image_top text,
+  add column if not exists section_4_video_url_top text,
+  add column if not exists section_5_image_top text,
+  add column if not exists section_5_video_url_top text,
+  add column if not exists section_6_image_top text,
+  add column if not exists section_6_video_url_top text,
+  add column if not exists section_7_image_top text,
+  add column if not exists section_7_video_url_top text,
+  add column if not exists section_8_image_top text,
+  add column if not exists section_8_video_url_top text,
+  add column if not exists section_9_image_top text,
+  add column if not exists section_9_video_url_top text,
+  add column if not exists section_10_image_top text,
+  add column if not exists section_10_video_url_top text,
+  add column if not exists section_11_image_top text,
+  add column if not exists section_11_video_url_top text,
+  add column if not exists section_12_image_top text,
+  add column if not exists section_12_video_url_top text,
+  add column if not exists section_13_image_top text,
+  add column if not exists section_13_video_url_top text,
+  add column if not exists section_14_image_top text,
+  add column if not exists section_14_video_url_top text,
+  add column if not exists section_15_image_top text,
+  add column if not exists section_15_video_url_top text;

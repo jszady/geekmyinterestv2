@@ -5,6 +5,8 @@ import { getSessionUser } from "@/lib/auth/session";
 import type { PostRow } from "@/lib/database.types";
 import {
   postSectionIndices,
+  sectionTopImageFormName,
+  sectionTopVideoFormName,
   sectionImageFormName,
   sectionTextFormName,
   sectionVideoFormName,
@@ -100,6 +102,10 @@ async function removeStoragePaths(
   if (error) console.error("[storage remove]", error.message);
 }
 
+function clearPathsUnderUser(paths: string[], userId: string): string[] {
+  return [...new Set(paths.filter((p) => !!p && p.startsWith(`${userId}/`)))];
+}
+
 function getPath(
   row: Record<string, unknown>,
   key: string,
@@ -115,31 +121,50 @@ async function buildSectionPayload(
   formData: FormData,
   existing: PostRow | null,
   mode: "create" | "update",
-): Promise<Record<string, string | null>> {
+): Promise<{ payload: Record<string, string | null>; clearedStoragePaths: string[] }> {
   const payload: Record<string, string | null> = {};
   const prev = existing as Record<string, unknown> | null;
+  const clearedStoragePaths: string[] = [];
 
   for (const n of postSectionIndices()) {
     const textKey = sectionTextFormName(n);
-    const imgKey = sectionImageFormName(n);
-    const videoKey = sectionVideoFormName(n);
+    const topImgKey = sectionTopImageFormName(n);
+    const topVideoKey = sectionTopVideoFormName(n);
+    const bottomImgKey = sectionImageFormName(n);
+    const bottomVideoKey = sectionVideoFormName(n);
     const rawText = String(formData.get(textKey) ?? "");
     payload[textKey] = normalizeRichTextForStorage(rawText);
 
-    const rawVideo = String(formData.get(videoKey) ?? "").trim();
-    payload[videoKey] = rawVideo.length ? rawVideo : null;
+    const rawTopVideo = String(formData.get(topVideoKey) ?? "").trim();
+    payload[topVideoKey] = rawTopVideo.length ? rawTopVideo : null;
 
-    const uploaded = await uploadImageField(supabase, userId, formData, imgKey);
-    if (uploaded) {
-      payload[imgKey] = uploaded;
-    } else if (mode === "update" && prev) {
-      payload[imgKey] = getPath(prev, imgKey);
-    } else {
-      payload[imgKey] = null;
+    const rawBottomVideo = String(formData.get(bottomVideoKey) ?? "").trim();
+    payload[bottomVideoKey] = rawBottomVideo.length ? rawBottomVideo : null;
+
+    for (const imgKey of [topImgKey, bottomImgKey]) {
+      const clearRequested = String(formData.get(`clear_${imgKey}`) ?? "") === "1";
+      const uploaded = await uploadImageField(supabase, userId, formData, imgKey);
+      if (uploaded) {
+        payload[imgKey] = uploaded;
+        if (mode === "update" && prev) {
+          const oldPath = getPath(prev, imgKey);
+          if (oldPath && oldPath !== uploaded) clearedStoragePaths.push(oldPath);
+        }
+      } else if (mode === "update" && prev) {
+        const oldPath = getPath(prev, imgKey);
+        if (clearRequested) {
+          payload[imgKey] = null;
+          if (oldPath) clearedStoragePaths.push(oldPath);
+        } else {
+          payload[imgKey] = oldPath;
+        }
+      } else {
+        payload[imgKey] = null;
+      }
     }
   }
 
-  return payload;
+  return { payload, clearedStoragePaths };
 }
 
 export type PostSaveResult =
@@ -177,6 +202,7 @@ function allPostImagePathsFromRow(row: Record<string, unknown>): string[] {
   push("hero_image");
   push("inline_image");
   for (const n of postSectionIndices()) {
+    push(sectionTopImageFormName(n));
     push(sectionImageFormName(n));
   }
   return paths;
@@ -195,7 +221,7 @@ export async function createPostAction(formData: FormData): Promise<PostSaveResu
     const card = await uploadImageField(supabase, userId, formData, "card_image");
     const hero = await uploadImageField(supabase, userId, formData, "hero_image");
 
-    const sections = await buildSectionPayload(
+    const { payload: sections } = await buildSectionPayload(
       supabase,
       userId,
       formData,
@@ -292,7 +318,10 @@ export async function updatePostAction(
     const newHero = await uploadImageField(supabase, userId, formData, "hero_image");
     if (newHero) hero = newHero;
 
-    const sections = await buildSectionPayload(
+    const {
+      payload: sections,
+      clearedStoragePaths,
+    } = await buildSectionPayload(
       supabase,
       userId,
       formData,
@@ -328,6 +357,8 @@ export async function updatePostAction(
       console.error("[update post]", error.message);
       return { ok: false, error: error.message };
     }
+
+    await removeStoragePaths(supabase, clearPathsUnderUser(clearedStoragePaths, userId));
 
     try {
       await syncPostTags(supabase, postId, tagIds);

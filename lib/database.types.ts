@@ -71,6 +71,12 @@ export type PostEditorialSectionColumns = Partial<{
   [N in SectionNum as `section_${N}_text`]: string | null;
 }> &
   Partial<{
+    [N in SectionNum as `section_${N}_image_top`]: string | null;
+  }> &
+  Partial<{
+    [N in SectionNum as `section_${N}_video_url_top`]: string | null;
+  }> &
+  Partial<{
     [N in SectionNum as `section_${N}_image`]: string | null;
   }> &
   Partial<{

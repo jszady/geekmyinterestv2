@@ -27,13 +27,18 @@ async function EditorialSections({ post }: Props) {
 
   for (const n of postSectionIndices()) {
     const t = p[`section_${n}_text`];
+    const it = p[`section_${n}_image_top`];
+    const vt = p[`section_${n}_video_url_top`];
     const i = p[`section_${n}_image`];
     const v = p[`section_${n}_video_url`];
     const textStr = typeof t === "string" && t.trim() ? t : null;
+    const topImgPath = typeof it === "string" && it.trim() ? it.trim() : null;
+    const topVideoRaw = typeof vt === "string" && vt.trim() ? vt.trim() : null;
     const imgPath = typeof i === "string" && i.trim() ? i.trim() : null;
     const videoRaw = typeof v === "string" && v.trim() ? v.trim() : null;
-    if (!textStr && !imgPath && !videoRaw) continue;
+    if (!textStr && !topImgPath && !topVideoRaw && !imgPath && !videoRaw) continue;
 
+    const topImgUrl = topImgPath ? await postImagePublicUrl(topImgPath) : null;
     const imgUrl = imgPath ? await postImagePublicUrl(imgPath) : null;
 
     chunks.push(
@@ -42,6 +47,21 @@ async function EditorialSections({ post }: Props) {
         data-article-section={n}
         className="mt-10 space-y-6 border-t border-white/[0.06] pt-10 first:mt-8 first:border-0 first:pt-0"
       >
+        {topImgUrl ? (
+          <div
+            className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900"
+            data-article-section-image-top={n}
+          >
+            <Image
+              src={topImgUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 720px"
+            />
+          </div>
+        ) : null}
+        {topVideoRaw ? <SectionVideoEmbed url={topVideoRaw} sectionIndex={n} /> : null}
         {textStr ? (
           <div className="prose prose-invert max-w-none text-zinc-200">
             {looksLikeHtml(textStr) ? (

@@ -6,8 +6,10 @@ import { postHasEditorialSections } from "@/lib/posts/section-fields";
 import { render, screen } from "@testing-library/react";
 
 describe("getEditorialSectionParts", () => {
-  it("emits text then image then video within a section, in section index order", () => {
+  it("emits top media, text, then bottom media within section order", () => {
     const post = {
+      section_1_image_top: "path/top.png",
+      section_1_video_url_top: "https://youtu.be/abcdefghijk",
       section_1_text: "First block",
       section_1_image: "path/one.png",
       section_1_video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -15,14 +17,21 @@ describe("getEditorialSectionParts", () => {
     };
     const parts = getEditorialSectionParts(post);
     expect(parts.map((p) => `${p.kind}:${p.section}`)).toEqual([
+      "image_top:1",
+      "video_top:1",
       "text:1",
       "image:1",
       "video:1",
       "text:3",
     ]);
-    expect(parts[0]).toMatchObject({ kind: "text", text: "First block" });
-    expect(parts[1]).toMatchObject({ kind: "image", storagePath: "path/one.png" });
-    expect(parts[2]).toMatchObject({
+    expect(parts[0]).toMatchObject({ kind: "image_top", storagePath: "path/top.png" });
+    expect(parts[1]).toMatchObject({
+      kind: "video_top",
+      url: "https://youtu.be/abcdefghijk",
+    });
+    expect(parts[2]).toMatchObject({ kind: "text", text: "First block" });
+    expect(parts[3]).toMatchObject({ kind: "image", storagePath: "path/one.png" });
+    expect(parts[4]).toMatchObject({
       kind: "video",
       url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     });
@@ -82,6 +91,8 @@ describe("postHasEditorialSections", () => {
 
   it("is true when any section text, image, or video URL exists", () => {
     expect(postHasEditorialSections({ section_9_text: "Hi" })).toBe(true);
+    expect(postHasEditorialSections({ section_9_image_top: "top.png" })).toBe(true);
+    expect(postHasEditorialSections({ section_9_video_url_top: "https://youtu.be/abcdefghijk" })).toBe(true);
     expect(postHasEditorialSections({ section_2_image: "z" })).toBe(true);
     expect(postHasEditorialSections({ section_5_video_url: "https://x.com/i/status/1" })).toBe(
       true,
