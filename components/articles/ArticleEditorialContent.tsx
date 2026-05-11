@@ -11,6 +11,15 @@ import Image from "next/image";
 
 type Props = { post: PostRow };
 
+/** Section/body imagery: 4:3 matches common 1200×900 uploads; image fills frame. */
+const articleSectionMediaFrame =
+  "relative mx-auto w-full max-w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]";
+
+const articleSectionAspect = "aspect-[4/3] w-full";
+
+const richHtmlFigureClass =
+  "[&_img]:mx-auto [&_img]:my-4 [&_img]:block [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-xl [&_img]:border [&_img]:border-white/[0.08] [&_img]:bg-[#0a1428]/80";
+
 /**
  * Renders sections 1–15 (text → image → video per section) or legacy body_part / inline_image.
  */
@@ -49,14 +58,14 @@ async function EditorialSections({ post }: Props) {
       >
         {topImgUrl ? (
           <div
-            className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900"
+            className={`${articleSectionMediaFrame} ${articleSectionAspect}`}
             data-article-section-image-top={n}
           >
             <Image
               src={topImgUrl}
               alt=""
               fill
-              className="object-cover"
+              className="h-full w-full object-cover object-center"
               sizes="(max-width: 768px) 100vw, 720px"
             />
           </div>
@@ -65,7 +74,10 @@ async function EditorialSections({ post }: Props) {
         {textStr ? (
           <div className="prose prose-invert max-w-none text-zinc-200">
             {looksLikeHtml(textStr) ? (
-              <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(textStr) }} />
+              <div
+                className={`max-w-none text-zinc-200 ${richHtmlFigureClass}`}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(textStr) }}
+              />
             ) : (
               <p className="whitespace-pre-wrap text-base leading-relaxed text-zinc-200">
                 {renderSectionTextWithMarkdown(textStr)}
@@ -75,14 +87,14 @@ async function EditorialSections({ post }: Props) {
         ) : null}
         {imgUrl ? (
           <div
-            className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900"
+            className={`${articleSectionMediaFrame} ${articleSectionAspect}`}
             data-article-section-image={n}
           >
             <Image
               src={imgUrl}
               alt=""
               fill
-              className="object-cover"
+              className="h-full w-full object-cover object-center"
               sizes="(max-width: 768px) 100vw, 720px"
             />
           </div>
@@ -111,12 +123,14 @@ async function LegacyArticleBody({ post }: Props) {
       ) : null}
 
       {inlineUrl ? (
-        <div className="relative mt-10 aspect-[16/10] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900">
+        <div
+          className={`${articleSectionMediaFrame} ${articleSectionAspect} mt-10`}
+        >
           <Image
             src={inlineUrl}
             alt={post.title}
             fill
-            className="object-cover"
+            className="h-full w-full object-cover object-center"
             sizes="(max-width: 768px) 100vw, 720px"
           />
         </div>

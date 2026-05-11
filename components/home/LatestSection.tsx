@@ -180,7 +180,7 @@ function LatestRow({ post }: { post: PostCardData }) {
           src={post.image.src}
           alt={post.image.alt}
           fill
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          className="object-cover object-[center_22%] transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
           sizes="(max-width: 640px) 144px, 192px"
         />
       </div>

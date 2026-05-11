@@ -215,7 +215,7 @@ export function NavbarBlogSearch({ variant }: NavbarBlogSearchProps) {
                         src={post.image.src}
                         alt=""
                         fill
-                        className="object-cover"
+                        className="object-cover object-[center_22%]"
                         sizes="72px"
                       />
                     </div>

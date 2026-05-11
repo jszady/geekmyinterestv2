@@ -114,8 +114,15 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
         </div>
 
         {heroUrl ? (
-          <div className="relative mt-8 aspect-[16/9] w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900 shadow-[0_0_24px_-6px_rgba(34,211,238,0.35)]">
-            <Image src={heroUrl} alt={post.title} fill className="object-cover" sizes="(max-width: 768px) 100vw, 720px" priority />
+          <div className="relative mx-auto mt-8 aspect-[16/9] w-full max-w-full overflow-hidden rounded-xl border border-white/[0.08] bg-zinc-900 shadow-[0_0_24px_-6px_rgba(34,211,238,0.35),inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+            <Image
+              src={heroUrl}
+              alt={post.title}
+              fill
+              className="h-full w-full object-cover object-center"
+              sizes="(max-width: 768px) 100vw, 720px"
+              priority
+            />
           </div>
         ) : null}
 

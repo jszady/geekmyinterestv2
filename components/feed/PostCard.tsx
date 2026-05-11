@@ -163,7 +163,7 @@ export function PostCard({
                 src={image.src}
                 alt={image.alt}
                 fill
-                className="object-cover transition-[transform] duration-500 ease-out group-hover:scale-[1.045] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                className="object-cover object-[center_22%] transition-[transform] duration-500 ease-out group-hover:scale-[1.045] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                 sizes={c.imageSizes}
               />
               <div

@@ -159,7 +159,7 @@ export function AuthorProfileView({
                           src={c.image.src}
                           alt={c.image.alt}
                           fill
-                          className="object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
+                          className="object-cover object-[center_22%] transition duration-700 ease-out group-hover:scale-[1.04]"
                           sizes="(max-width: 768px) 100vw, 33vw"
                         />
                         <div
@@ -203,7 +203,7 @@ export function AuthorProfileView({
                           src={c.image.src}
                           alt={c.image.alt}
                           fill
-                          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                          className="object-cover object-[center_22%] transition duration-500 group-hover:scale-[1.03]"
                           sizes="176px"
                         />
                       </div>

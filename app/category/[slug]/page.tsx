@@ -91,7 +91,7 @@ export default async function CategoryArchivePage({ params }: { params: Promise<
                         src={c.image.src}
                         alt={c.image.alt}
                         fill
-                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                        className="object-cover object-[center_22%] transition duration-500 group-hover:scale-[1.03]"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                     </div>
