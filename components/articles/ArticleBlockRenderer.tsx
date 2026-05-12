@@ -78,11 +78,13 @@ export async function ArticleBlockRenderer({ blocks }: Props) {
       }
 
       case "youtube":
-        chunks.push(
-          <div key={b.id} className="mt-8 w-full min-w-0" data-block-type="youtube">
-            <SectionVideoEmbed url={b.data.url} sectionIndex={i + 1} />
-          </div>,
-        );
+        if (b.data.url.trim()) {
+          chunks.push(
+            <div key={b.id} className="mt-8 w-full min-w-0" data-block-type="youtube">
+              <SectionVideoEmbed url={b.data.url} sectionIndex={i + 1} />
+            </div>,
+          );
+        }
         break;
 
       case "divider":

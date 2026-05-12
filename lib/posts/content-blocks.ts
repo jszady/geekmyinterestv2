@@ -1,5 +1,3 @@
-import { richHtmlToPlainText } from "@/lib/content/sanitize-rich-html";
-import { parseYouTubeVideoId } from "@/lib/posts/section-video";
 import {
   postSectionIndices,
   sectionImageFormName,
@@ -31,7 +29,7 @@ export type ContentBlock =
       id: string;
       type: "poster";
       order: number;
-      data: { image: string; caption: string; alt: string };
+      data: { image: string | null; caption: string; alt: string };
     }
   | { id: string; type: "youtube"; order: number; data: { url: string } }
   | { id: string; type: "divider"; order: number; data: Record<string, never> }
@@ -123,10 +121,6 @@ export function parseAndValidateContentBlocksJson(
     switch (type) {
       case "text": {
         const html = typeof d.html === "string" ? d.html : "";
-        const plain = richHtmlToPlainText(html).trim();
-        if (!plain) {
-          return { ok: false, error: "Text blocks cannot be empty." };
-        }
         blocks.push({ id, type: "text", order, data: { html } });
         break;
       }
@@ -136,12 +130,6 @@ export function parseAndValidateContentBlocksJson(
             ? d.storagePath.trim()
             : null;
         const caption = typeof d.caption === "string" ? d.caption.trim() : "";
-        if (!storagePath) {
-          return {
-            ok: false,
-            error: "Each image block needs an uploaded image.",
-          };
-        }
         blocks.push({
           id,
           type: "image",
@@ -155,12 +143,6 @@ export function parseAndValidateContentBlocksJson(
           typeof d.image === "string" && d.image.trim() ? d.image.trim() : null;
         const caption = typeof d.caption === "string" ? d.caption.trim() : "";
         const alt = typeof d.alt === "string" ? d.alt.trim() : "";
-        if (!image) {
-          return {
-            ok: false,
-            error: "Each poster block needs an uploaded image.",
-          };
-        }
         blocks.push({
           id,
           type: "poster",
@@ -170,10 +152,8 @@ export function parseAndValidateContentBlocksJson(
         break;
       }
       case "youtube": {
-        const url = typeof d.url === "string" ? d.url.trim() : "";
-        if (!url || !parseYouTubeVideoId(url)) {
-          return { ok: false, error: "Each YouTube block needs a valid YouTube URL." };
-        }
+        const rawUrl = typeof d.url === "string" ? d.url : "";
+        const url = rawUrl.trim();
         blocks.push({ id, type: "youtube", order, data: { url } });
         break;
       }

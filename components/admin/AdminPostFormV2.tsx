@@ -128,7 +128,10 @@ function normalizeClientBlock(x: unknown, order: number): ClientContentBlock | n
         type: "image",
         order,
         data: {
-          storagePath: typeof d.storagePath === "string" ? d.storagePath : null,
+          storagePath:
+            typeof d.storagePath === "string" && d.storagePath.trim()
+              ? d.storagePath.trim()
+              : null,
           caption: typeof d.caption === "string" ? d.caption : "",
         },
       };
@@ -138,7 +141,7 @@ function normalizeClientBlock(x: unknown, order: number): ClientContentBlock | n
         type: "poster",
         order,
         data: {
-          image: typeof d.image === "string" ? d.image : null,
+          image: typeof d.image === "string" && d.image.trim() ? d.image.trim() : null,
           caption: typeof d.caption === "string" ? d.caption : "",
           alt: typeof d.alt === "string" ? d.alt : "",
         },
