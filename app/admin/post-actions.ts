@@ -52,17 +52,17 @@ function firstUploadedFile(formData: FormData, field: string): File | null {
   return null;
 }
 
-async function uploadImageField(
+async function tryUploadImageField(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
   formData: FormData,
   field: string,
-): Promise<string | null> {
+): Promise<{ path: string | null; error?: string }> {
   const file = firstUploadedFile(formData, field);
-  if (!file) return null;
+  if (!file) return { path: null };
   const checked = await validateAdminImageUpload(file);
   if (!checked.ok) {
-    throw new Error(`${field}: ${checked.error}`);
+    return { path: null, error: `${field}: ${checked.error}` };
   }
   const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
   const path = `${userId}/${Date.now()}-${field}-${safe}`;
@@ -72,9 +72,23 @@ async function uploadImageField(
   });
   if (error) {
     console.error(`[upload ${field}]`, error.message, error);
-    throw new Error(`Upload failed (${field}): ${error.message}`);
+    return {
+      path: null,
+      error: `Upload failed (${field}): ${error.message}`,
+    };
   }
-  return path;
+  return { path };
+}
+
+async function uploadImageField(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  formData: FormData,
+  field: string,
+): Promise<string | null> {
+  const r = await tryUploadImageField(supabase, userId, formData, field);
+  if (r.error) throw new Error(r.error);
+  return r.path;
 }
 
 /**
@@ -129,17 +143,22 @@ function getPath(
   return typeof v === "string" && v.trim() ? v : null;
 }
 
-/** Build `section_N_text` / `section_N_image` from form; preserve existing image paths on update when no new file. */
+/** Build `section_N_*` from form. Optional media never overwrites DB on update unless cleared or replaced. */
 async function buildSectionPayload(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
   formData: FormData,
   existing: PostRow | null,
   mode: "create" | "update",
-): Promise<{ payload: Record<string, string | null>; clearedStoragePaths: string[] }> {
+): Promise<{
+  payload: Record<string, string | null>;
+  clearedStoragePaths: string[];
+  warnings: string[];
+}> {
   const payload: Record<string, string | null> = {};
   const prev = existing as Record<string, unknown> | null;
   const clearedStoragePaths: string[] = [];
+  const warnings: string[] = [];
 
   for (const n of postSectionIndices()) {
     const textKey = sectionTextFormName(n);
@@ -150,15 +169,45 @@ async function buildSectionPayload(
     const rawText = String(formData.get(textKey) ?? "");
     payload[textKey] = normalizeRichTextForStorage(rawText);
 
+    const clearTopVideo =
+      String(formData.get(`clear_${topVideoKey}`) ?? "") === "1";
+    const clearBottomVideo =
+      String(formData.get(`clear_${bottomVideoKey}`) ?? "") === "1";
+
     const rawTopVideo = String(formData.get(topVideoKey) ?? "").trim();
-    payload[topVideoKey] = rawTopVideo.length ? rawTopVideo : null;
+    if (rawTopVideo.length) {
+      payload[topVideoKey] = rawTopVideo;
+    } else if (clearTopVideo) {
+      payload[topVideoKey] = null;
+    } else if (mode === "update" && prev) {
+      payload[topVideoKey] = getPath(prev, topVideoKey);
+    } else {
+      payload[topVideoKey] = null;
+    }
 
     const rawBottomVideo = String(formData.get(bottomVideoKey) ?? "").trim();
-    payload[bottomVideoKey] = rawBottomVideo.length ? rawBottomVideo : null;
+    if (rawBottomVideo.length) {
+      payload[bottomVideoKey] = rawBottomVideo;
+    } else if (clearBottomVideo) {
+      payload[bottomVideoKey] = null;
+    } else if (mode === "update" && prev) {
+      payload[bottomVideoKey] = getPath(prev, bottomVideoKey);
+    } else {
+      payload[bottomVideoKey] = null;
+    }
 
     for (const imgKey of [topImgKey, bottomImgKey]) {
       const clearRequested = String(formData.get(`clear_${imgKey}`) ?? "") === "1";
-      const uploaded = await uploadImageField(supabase, userId, formData, imgKey);
+      const uploadResult = await tryUploadImageField(
+        supabase,
+        userId,
+        formData,
+        imgKey,
+      );
+      if (uploadResult.error) {
+        warnings.push(uploadResult.error);
+      }
+      const uploaded = uploadResult.path;
       if (uploaded) {
         payload[imgKey] = uploaded;
         if (mode === "update" && prev) {
@@ -179,11 +228,11 @@ async function buildSectionPayload(
     }
   }
 
-  return { payload, clearedStoragePaths };
+  return { payload, clearedStoragePaths, warnings };
 }
 
 export type PostSaveResult =
-  | { ok: true; id: string }
+  | { ok: true; id: string; warnings?: string[] }
   | { ok: false; error: string };
 
 function readPostFormMeta(formData: FormData) {
@@ -275,16 +324,21 @@ export async function createPostAction(formData: FormData): Promise<PostSaveResu
     const f = readPostFormMeta(formData);
     if (!f.title) return { ok: false, error: "Title is required." };
 
-    const card = await uploadImageField(supabase, userId, formData, "card_image");
-    const hero = await uploadImageField(supabase, userId, formData, "hero_image");
-
-    const { payload: sections } = await buildSectionPayload(
+    const { payload: sections, warnings: sectionWarnings } = await buildSectionPayload(
       supabase,
       userId,
       formData,
       null,
       "create",
     );
+
+    const warnings = [...sectionWarnings];
+    const cardR = await tryUploadImageField(supabase, userId, formData, "card_image");
+    if (cardR.error) warnings.push(cardR.error);
+    const heroR = await tryUploadImageField(supabase, userId, formData, "hero_image");
+    if (heroR.error) warnings.push(heroR.error);
+    const card = cardR.path;
+    const hero = heroR.path;
 
     const baseSlug = slugify(f.slugInput || f.title);
     const slug = await resolveUniqueSlug(supabase, baseSlug);
@@ -336,7 +390,11 @@ export async function createPostAction(formData: FormData): Promise<PostSaveResu
 
     revalidatePath("/");
     revalidatePath("/admin");
-    return { ok: true, id: data.id };
+    return {
+      ok: true,
+      id: data.id,
+      warnings: warnings.length ? warnings : undefined,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[createPostAction]", msg);
@@ -374,20 +432,23 @@ export async function updatePostAction(
     const clearHero = String(formData.get("clear_hero_image") ?? "") === "1";
 
     const cardHeroPathsToRemove: string[] = [];
+    const uploadWarnings: string[] = [];
 
-    const newCard = await uploadImageField(supabase, userId, formData, "card_image");
-    if (newCard) {
-      if (row.card_image && row.card_image !== newCard) cardHeroPathsToRemove.push(row.card_image);
-      card = newCard;
+    const cardR = await tryUploadImageField(supabase, userId, formData, "card_image");
+    if (cardR.error) uploadWarnings.push(cardR.error);
+    if (cardR.path) {
+      if (row.card_image && row.card_image !== cardR.path) cardHeroPathsToRemove.push(row.card_image);
+      card = cardR.path;
     } else if (clearCard) {
       if (row.card_image) cardHeroPathsToRemove.push(row.card_image);
       card = null;
     }
 
-    const newHero = await uploadImageField(supabase, userId, formData, "hero_image");
-    if (newHero) {
-      if (row.hero_image && row.hero_image !== newHero) cardHeroPathsToRemove.push(row.hero_image);
-      hero = newHero;
+    const heroR = await tryUploadImageField(supabase, userId, formData, "hero_image");
+    if (heroR.error) uploadWarnings.push(heroR.error);
+    if (heroR.path) {
+      if (row.hero_image && row.hero_image !== heroR.path) cardHeroPathsToRemove.push(row.hero_image);
+      hero = heroR.path;
     } else if (clearHero) {
       if (row.hero_image) cardHeroPathsToRemove.push(row.hero_image);
       hero = null;
@@ -396,6 +457,7 @@ export async function updatePostAction(
     const {
       payload: sections,
       clearedStoragePaths,
+      warnings: sectionWarnings,
     } = await buildSectionPayload(
       supabase,
       userId,
@@ -403,6 +465,8 @@ export async function updatePostAction(
       row,
       "update",
     );
+
+    for (const w of sectionWarnings) uploadWarnings.push(w);
 
     const baseSlug = slugify(f.slugInput || f.title);
     const slug = await resolveUniqueSlug(supabase, baseSlug, postId);
@@ -451,7 +515,11 @@ export async function updatePostAction(
     revalidatePath("/");
     revalidatePath("/admin");
     revalidatePath(`/articles/${slug}`);
-    return { ok: true, id: postId };
+    return {
+      ok: true,
+      id: postId,
+      warnings: uploadWarnings.length ? uploadWarnings : undefined,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg };

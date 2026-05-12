@@ -88,10 +88,24 @@ export function AdminPostForm(props: Props) {
           {state.error}
         </div>
       ) : null}
+      {state?.ok === true && state.warnings?.length ? (
+        <div
+          className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          <p className="font-semibold text-amber-50">Saved, but some uploads were skipped:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-100/95">
+            {state.warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {props.mode === "edit" && post ? (
         <p className="text-xs text-zinc-500">
-          Leave image fields empty to keep existing files. New uploads replace the stored path in{" "}
-          <code className="text-zinc-400">post-images</code>.
+          Leave image fields empty to keep existing files. Video URL fields left blank keep the saved link
+          unless you use <span className="text-zinc-400">Clear video</span>. New uploads replace the stored path
+          in <code className="text-zinc-400">post-images</code>.
         </p>
       ) : null}
 
@@ -328,6 +342,8 @@ export function AdminPostForm(props: Props) {
           const bottomVideoDefault = pr?.[vkBottom] ?? "";
           const clearTop = !!clearFlags[ikTop];
           const clearBottom = !!clearFlags[ikBottom];
+          const clearTopVideo = !!clearFlags[vkTop];
+          const clearBottomVideo = !!clearFlags[vkBottom];
           return (
             <div
               key={n}
@@ -364,6 +380,11 @@ export function AdminPostForm(props: Props) {
                   ) : null}
                 </div>
                 <div>
+                  <input
+                    type="hidden"
+                    name={`clear_${vkTop}`}
+                    value={clearTopVideo ? "1" : "0"}
+                  />
                   <label className={labelClass} htmlFor={vkTop}>
                     Top video / trailer URL (optional)
                   </label>
@@ -377,6 +398,17 @@ export function AdminPostForm(props: Props) {
                     className={fieldClass}
                     autoComplete="off"
                   />
+                  {topVideoDefault ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleClear(vkTop)}
+                        className="rounded border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+                      >
+                        {clearTopVideo ? "Undo clear video" : "Clear video"}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div>
                   <label className={labelClass} htmlFor={tk}>
@@ -419,6 +451,11 @@ export function AdminPostForm(props: Props) {
                   ) : null}
                 </div>
                 <div>
+                  <input
+                    type="hidden"
+                    name={`clear_${vkBottom}`}
+                    value={clearBottomVideo ? "1" : "0"}
+                  />
                   <label className={labelClass} htmlFor={vkBottom}>
                     Bottom video / trailer URL (optional)
                   </label>
@@ -432,6 +469,17 @@ export function AdminPostForm(props: Props) {
                     className={fieldClass}
                     autoComplete="off"
                   />
+                  {bottomVideoDefault ? (
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        onClick={() => toggleClear(vkBottom)}
+                        className="rounded border border-white/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+                      >
+                        {clearBottomVideo ? "Undo clear video" : "Clear video"}
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

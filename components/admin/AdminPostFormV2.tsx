@@ -287,6 +287,19 @@ export function AdminPostFormV2(props: Props) {
           {state.error}
         </div>
       ) : null}
+      {state?.ok === true && state.warnings?.length ? (
+        <div
+          className="rounded-lg border border-amber-400/35 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+          role="status"
+        >
+          <p className="font-semibold text-amber-50">Saved, but some uploads were skipped:</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-100/95">
+            {state.warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {props.mode === "edit" && post ? (
         <p className="text-xs text-zinc-500">
