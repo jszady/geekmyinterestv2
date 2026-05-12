@@ -42,9 +42,17 @@ type ClientImageData = {
   clearImage?: boolean;
 };
 
+type ClientPosterData = {
+  image: string | null;
+  caption: string;
+  alt: string;
+  clearImage?: boolean;
+};
+
 export type ClientContentBlock =
   | { id: string; type: "text"; order: number; data: { html: string } }
   | { id: string; type: "image"; order: number; data: ClientImageData }
+  | { id: string; type: "poster"; order: number; data: ClientPosterData }
   | { id: string; type: "youtube"; order: number; data: { url: string } }
   | { id: string; type: "divider"; order: number; data: Record<string, never> }
   | { id: string; type: "spacer"; order: number; data: { size: SpacerSize } };
@@ -68,6 +76,15 @@ function createImageBlock(): ClientContentBlock {
     type: "image",
     order: 0,
     data: { storagePath: null, caption: "" },
+  };
+}
+
+function createPosterBlock(): ClientContentBlock {
+  return {
+    id: newId(),
+    type: "poster",
+    order: 0,
+    data: { image: null, caption: "", alt: "" },
   };
 }
 
@@ -115,6 +132,17 @@ function normalizeClientBlock(x: unknown, order: number): ClientContentBlock | n
           caption: typeof d.caption === "string" ? d.caption : "",
         },
       };
+    case "poster":
+      return {
+        id,
+        type: "poster",
+        order,
+        data: {
+          image: typeof d.image === "string" ? d.image : null,
+          caption: typeof d.caption === "string" ? d.caption : "",
+          alt: typeof d.alt === "string" ? d.alt : "",
+        },
+      };
     case "youtube":
       return {
         id,
@@ -157,6 +185,19 @@ function serializeBlocks(blocks: ClientContentBlock[]): string {
           data: {
             storagePath: b.data.storagePath,
             caption: b.data.caption,
+            ...(b.data.clearImage ? { clearImage: true } : {}),
+          },
+        };
+      }
+      if (b.type === "poster") {
+        return {
+          id: b.id,
+          type: "poster",
+          order: i,
+          data: {
+            image: b.data.image,
+            caption: b.data.caption,
+            alt: b.data.alt,
             ...(b.data.clearImage ? { clearImage: true } : {}),
           },
         };
@@ -371,6 +412,10 @@ export function AdminPostFormV2(props: Props) {
             <dt className="font-medium text-zinc-300">Hero image</dt>
             <dd className="font-mono text-[13px] tabular-nums text-cyan-200/85">1600 × 900 px</dd>
           </div>
+          <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-white/[0.05] pb-2">
+            <dt className="font-medium text-zinc-300">Poster block</dt>
+            <dd className="font-mono text-[13px] tabular-nums text-cyan-200/85">~600 × 900 (2:3)</dd>
+          </div>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <dt className="font-medium text-zinc-300">Block images</dt>
             <dd className="font-mono text-[13px] tabular-nums text-cyan-200/85">1200 × 900 px</dd>
@@ -452,6 +497,9 @@ export function AdminPostFormV2(props: Props) {
             <button type="button" className={btnSecondary} onClick={() => addBlock(createImageBlock)}>
               + Image
             </button>
+            <button type="button" className={btnSecondary} onClick={() => addBlock(createPosterBlock)}>
+              + Poster image
+            </button>
             <button type="button" className={btnSecondary} onClick={() => addBlock(createYoutubeBlock)}>
               + YouTube
             </button>
@@ -473,11 +521,13 @@ export function AdminPostFormV2(props: Props) {
                     ? "Text section"
                     : b.type === "image"
                       ? "Image"
-                      : b.type === "youtube"
-                        ? "YouTube"
-                        : b.type === "divider"
-                          ? "Divider"
-                          : "Spacer"}
+                      : b.type === "poster"
+                        ? "Poster image"
+                        : b.type === "youtube"
+                          ? "YouTube"
+                          : b.type === "divider"
+                            ? "Divider"
+                            : "Spacer"}
                 </span>
                 <div className="flex flex-wrap gap-2">
                   <button
@@ -572,6 +622,86 @@ export function AdminPostFormV2(props: Props) {
                       }
                       className={fieldClass}
                       placeholder="Image caption"
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              {b.type === "poster" ? (
+                <div className="space-y-3">
+                  <input
+                    name={`v2img_${b.id}`}
+                    type="file"
+                    accept="image/*"
+                    onChange={() =>
+                      updateBlock(b.id, {
+                        ...b,
+                        data: { ...b.data, clearImage: false },
+                      })
+                    }
+                    className="block w-full min-w-0 text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
+                  />
+                  {b.data.image ? (
+                    <p className="break-all text-[11px] text-zinc-500">
+                      Stored: {b.data.image}
+                      {b.data.clearImage ? (
+                        <span className="ml-2 text-amber-300/90">(will clear on save)</span>
+                      ) : null}
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-zinc-500">Upload a poster image (shown cropped in article; full size in lightbox).</p>
+                  )}
+                  {b.data.image ? (
+                    <button
+                      type="button"
+                      className={btnSecondary}
+                      onClick={() =>
+                        updateBlock(b.id, {
+                          ...b,
+                          data: {
+                            ...b.data,
+                            clearImage: !b.data.clearImage,
+                          },
+                        })
+                      }
+                    >
+                      {b.data.clearImage ? "Undo clear poster" : "Clear poster image"}
+                    </button>
+                  ) : null}
+                  <div>
+                    <label className={labelClass} htmlFor={`poster-cap-${b.id}`}>
+                      Caption (optional)
+                    </label>
+                    <input
+                      id={`poster-cap-${b.id}`}
+                      type="text"
+                      value={b.data.caption}
+                      onChange={(e) =>
+                        updateBlock(b.id, {
+                          ...b,
+                          data: { ...b.data, caption: e.target.value },
+                        })
+                      }
+                      className={fieldClass}
+                      placeholder="Shown under the poster"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor={`poster-alt-${b.id}`}>
+                      Alt text (optional)
+                    </label>
+                    <input
+                      id={`poster-alt-${b.id}`}
+                      type="text"
+                      value={b.data.alt}
+                      onChange={(e) =>
+                        updateBlock(b.id, {
+                          ...b,
+                          data: { ...b.data, alt: e.target.value },
+                        })
+                      }
+                      className={fieldClass}
+                      placeholder="Describe the poster for screen readers"
                     />
                   </div>
                 </div>

@@ -11,7 +11,13 @@ import {
 
 export type SpacerSize = "sm" | "md" | "lg";
 
-export type ContentBlockType = "text" | "image" | "youtube" | "divider" | "spacer";
+export type ContentBlockType =
+  | "text"
+  | "image"
+  | "poster"
+  | "youtube"
+  | "divider"
+  | "spacer";
 
 export type ContentBlock =
   | { id: string; type: "text"; order: number; data: { html: string } }
@@ -20,6 +26,12 @@ export type ContentBlock =
       type: "image";
       order: number;
       data: { storagePath: string | null; caption: string };
+    }
+  | {
+      id: string;
+      type: "poster";
+      order: number;
+      data: { image: string; caption: string; alt: string };
     }
   | { id: string; type: "youtube"; order: number; data: { url: string } }
   | { id: string; type: "divider"; order: number; data: Record<string, never> }
@@ -52,10 +64,15 @@ export function collectStoragePathsFromContentBlocks(
   for (const b of blocks) {
     if (!b || typeof b !== "object") continue;
     const o = b as Record<string, unknown>;
-    if (o.type !== "image") continue;
+    if (o.type !== "image" && o.type !== "poster") continue;
     const data = o.data as Record<string, unknown> | undefined;
-    const p = data?.storagePath;
-    if (typeof p === "string" && p.trim()) paths.push(p.trim());
+    if (o.type === "image") {
+      const p = data?.storagePath;
+      if (typeof p === "string" && p.trim()) paths.push(p.trim());
+    } else {
+      const p = data?.image;
+      if (typeof p === "string" && p.trim()) paths.push(p.trim());
+    }
   }
   return paths;
 }
@@ -133,6 +150,25 @@ export function parseAndValidateContentBlocksJson(
         });
         break;
       }
+      case "poster": {
+        const image =
+          typeof d.image === "string" && d.image.trim() ? d.image.trim() : null;
+        const caption = typeof d.caption === "string" ? d.caption.trim() : "";
+        const alt = typeof d.alt === "string" ? d.alt.trim() : "";
+        if (!image) {
+          return {
+            ok: false,
+            error: "Each poster block needs an uploaded image.",
+          };
+        }
+        blocks.push({
+          id,
+          type: "poster",
+          order,
+          data: { image, caption, alt },
+        });
+        break;
+      }
       case "youtube": {
         const url = typeof d.url === "string" ? d.url.trim() : "";
         if (!url || !parseYouTubeVideoId(url)) {
@@ -175,15 +211,23 @@ export async function mergeV2ImageBlocksFromFormData(
     draft.map(async (item) => {
       if (!item || typeof item !== "object") return item;
       const o = item as Record<string, unknown>;
-      if (o.type !== "image") return item;
+      if (o.type !== "image" && o.type !== "poster") return item;
       const id = o.id;
       if (typeof id !== "string") return item;
       const data = { ...((o.data as Record<string, unknown>) ?? {}) };
       const uploaded = await uploadField(formData, `v2img_${id}`);
       if (uploaded) {
-        data.storagePath = uploaded;
+        if (o.type === "image") {
+          data.storagePath = uploaded;
+        } else {
+          data.image = uploaded;
+        }
       } else if (data.clearImage === true) {
-        data.storagePath = null;
+        if (o.type === "image") {
+          data.storagePath = null;
+        } else {
+          data.image = null;
+        }
       }
       delete data.clearImage;
       return { ...o, data };

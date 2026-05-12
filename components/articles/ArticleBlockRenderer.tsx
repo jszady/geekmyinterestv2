@@ -1,6 +1,7 @@
 import { sanitizeRichHtml } from "@/lib/content/sanitize-rich-html";
 import { postImagePublicUrl } from "@/lib/posts/image-url";
 import type { ContentBlock } from "@/lib/posts/content-blocks";
+import { PosterBlockInteractive } from "@/components/articles/PosterBlockInteractive";
 import { SectionVideoEmbed } from "@/components/articles/SectionVideoEmbed";
 import Image from "next/image";
 
@@ -56,6 +57,21 @@ export async function ArticleBlockRenderer({ blocks }: Props) {
                 <figcaption className="text-center text-sm text-zinc-500">{b.data.caption}</figcaption>
               ) : null}
             </figure>,
+          );
+        }
+        break;
+      }
+
+      case "poster": {
+        const url = await postImagePublicUrl(b.data.image);
+        if (url) {
+          chunks.push(
+            <PosterBlockInteractive
+              key={b.id}
+              imageUrl={url}
+              alt={b.data.alt}
+              caption={b.data.caption || undefined}
+            />,
           );
         }
         break;
