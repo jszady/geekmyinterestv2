@@ -1,6 +1,8 @@
 import { AdminDeletePostButton } from "@/components/admin/AdminDeletePostButton";
 import { AdminPostForm } from "@/components/admin/AdminPostForm";
+import { AdminPostFormV2 } from "@/components/admin/AdminPostFormV2";
 import { UserAvatar } from "@/components/profile/UserAvatar";
+import { postHasContentBlocks } from "@/lib/posts/content-blocks";
 import { fetchPostByIdForAdmin, fetchProfilesByIds } from "@/lib/posts/queries";
 import { fetchTagsForPostId } from "@/lib/tags/queries";
 import Link from "next/link";
@@ -26,7 +28,9 @@ export default async function EditPostPage({ params }: { params: Promise<Params>
           <Link href="/admin" className="text-xs font-semibold text-cyan-300 hover:text-cyan-200">
             ← All posts
           </Link>
-          <h2 className="mt-2 text-xl font-bold text-white">Edit post</h2>
+          <h2 className="mt-2 text-xl font-bold text-white">
+            {postHasContentBlocks(post) ? "Edit post (V2 blocks)" : "Edit post"}
+          </h2>
         </div>
         {post.status === "published" ? (
           <Link
@@ -57,7 +61,11 @@ export default async function EditPostPage({ params }: { params: Promise<Params>
           <p className="text-xs text-zinc-500">ID {post.author_id}</p>
         </div>
       </div>
-      <AdminPostForm mode="edit" post={post} initialTags={initialTags} />
+      {postHasContentBlocks(post) ? (
+        <AdminPostFormV2 mode="edit" post={post} initialTags={initialTags} />
+      ) : (
+        <AdminPostForm mode="edit" post={post} initialTags={initialTags} />
+      )}
       <AdminDeletePostButton postId={post.id} title={post.title} />
     </div>
   );

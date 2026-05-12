@@ -103,6 +103,8 @@ export type PostRow = {
   created_at: string;
   updated_at?: string | null;
   published_at?: string | null;
+  /** V2 flexible blocks (JSON array). When non-empty, article uses block renderer instead of sections. */
+  content_blocks?: unknown | null;
 } & PostEditorialSectionColumns;
 
 export type CommentRow = {

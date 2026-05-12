@@ -18,6 +18,12 @@ export default async function AdminDashboardPage() {
           New post
         </Link>
         <Link
+          href="/admin/posts/new-v2"
+          className="rounded-md border border-violet-400/35 px-3 py-1.5 text-sm font-semibold text-violet-100 hover:border-violet-300/55"
+        >
+          New post V2
+        </Link>
+        <Link
           href="/admin/podcasts"
           className="rounded-md border border-fuchsia-400/35 px-3 py-1.5 text-sm font-semibold text-fuchsia-100 hover:border-fuchsia-300/55"
         >

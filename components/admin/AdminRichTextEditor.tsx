@@ -44,11 +44,13 @@ function asHtmlValue(value: string): string {
 }
 
 type Props = {
-  name: string;
+  /** Omit when HTML is managed externally (e.g. block editor JSON). */
+  name?: string;
   id: string;
   defaultValue: string;
   placeholder?: string;
   minHeightClass?: string;
+  onHtmlChange?: (html: string) => void;
 };
 
 export function AdminRichTextEditor({
@@ -57,6 +59,7 @@ export function AdminRichTextEditor({
   defaultValue,
   placeholder = "Write here...",
   minHeightClass = "min-h-[180px]",
+  onHtmlChange,
 }: Props) {
   const [html, setHtml] = useState<string>(asHtmlValue(defaultValue));
 
@@ -88,7 +91,9 @@ export function AdminRichTextEditor({
       },
     },
     onUpdate: ({ editor: ed }) => {
-      setHtml(ed.getHTML());
+      const next = ed.getHTML();
+      setHtml(next);
+      onHtmlChange?.(next);
     },
   });
 
@@ -122,7 +127,7 @@ export function AdminRichTextEditor({
 
   return (
     <div className="mt-1 rounded-lg border border-white/10 bg-[#050a14]">
-      <input type="hidden" id={id} name={name} value={html} />
+      {name ? <input type="hidden" id={id} name={name} value={html} /> : null}
 
       <p className="border-b border-white/10 px-2 py-1.5 text-[11px] text-zinc-500">
         <span className="text-zinc-400">Shift+Enter</span> tight line break ·{" "}

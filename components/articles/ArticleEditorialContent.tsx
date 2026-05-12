@@ -1,6 +1,11 @@
 import type { PostRow } from "@/lib/database.types";
+import { ArticleBlockRenderer } from "@/components/articles/ArticleBlockRenderer";
 import { SectionVideoEmbed } from "@/components/articles/SectionVideoEmbed";
 import { postImagePublicUrl } from "@/lib/posts/image-url";
+import {
+  postHasContentBlocks,
+  type ContentBlock,
+} from "@/lib/posts/content-blocks";
 import {
   postHasEditorialSections,
   postSectionIndices,
@@ -21,6 +26,10 @@ const articleSectionAspect = "aspect-[4/3] w-full";
  * Renders sections 1–15 (text → image → video per section) or legacy body_part / inline_image.
  */
 export async function ArticleEditorialContent({ post }: Props) {
+  if (postHasContentBlocks(post as Record<string, unknown>)) {
+    const blocks = post.content_blocks as ContentBlock[];
+    return <ArticleBlockRenderer blocks={blocks} />;
+  }
   if (postHasEditorialSections(post as Record<string, unknown>)) {
     return <EditorialSections post={post} />;
   }

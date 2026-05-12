@@ -18,6 +18,14 @@ import { normalizeRichTextForStorage } from "@/lib/content/rich-text-storage";
 import { fetchTagSlugsByIds, fetchTagSlugsForPostId } from "@/lib/tags/queries";
 import { readTagIdsFromFormData, syncPostTags } from "@/lib/tags/sync";
 import { revalidatePath } from "next/cache";
+import {
+  collectStoragePathsFromContentBlocks,
+  emptySectionFieldsPayload,
+  mergeV2ImageBlocksFromFormData,
+  parseAndValidateContentBlocksJson,
+  postHasContentBlocks,
+  type ContentBlock,
+} from "@/lib/posts/content-blocks";
 
 const BUCKET = "post-images";
 
@@ -212,7 +220,49 @@ function allPostImagePathsFromRow(row: Record<string, unknown>): string[] {
     push(sectionTopImageFormName(n));
     push(sectionImageFormName(n));
   }
+  paths.push(...collectStoragePathsFromContentBlocks(row.content_blocks));
   return paths;
+}
+
+async function prepareV2ContentBlocksFromForm(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+  formData: FormData,
+  existing: PostRow | null,
+): Promise<
+  | { ok: true; blocks: ContentBlock[]; pathsToRemove: string[] }
+  | { ok: false; error: string }
+> {
+  const raw = String(formData.get("content_blocks_json") ?? "").trim();
+  if (!raw) return { ok: false, error: "Missing article content blocks." };
+
+  let draft: unknown[];
+  try {
+    const p = JSON.parse(raw) as unknown;
+    if (!Array.isArray(p) || p.length === 0) {
+      return { ok: false, error: "Add at least one content block." };
+    }
+    draft = p;
+  } catch {
+    return { ok: false, error: "Invalid content blocks data." };
+  }
+
+  const uploadWrapper = (fd: FormData, field: string) =>
+    uploadImageField(supabase, userId, fd, field);
+
+  const merged = await mergeV2ImageBlocksFromFormData(draft, formData, uploadWrapper);
+
+  const validated = parseAndValidateContentBlocksJson(JSON.stringify(merged));
+  if (!validated.ok) return validated;
+
+  const oldPaths = existing
+    ? collectStoragePathsFromContentBlocks(existing.content_blocks)
+    : [];
+  const newPaths = collectStoragePathsFromContentBlocks(validated.blocks);
+  const newSet = new Set(newPaths);
+  const pathsToRemove = oldPaths.filter((p) => !newSet.has(p));
+
+  return { ok: true, blocks: validated.blocks, pathsToRemove };
 }
 
 export async function createPostAction(formData: FormData): Promise<PostSaveResult> {
@@ -395,6 +445,206 @@ export async function updatePostAction(
     } catch (tagErr) {
       const msg = tagErr instanceof Error ? tagErr.message : String(tagErr);
       console.error("[update post] tags", msg);
+      return { ok: false, error: msg };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    revalidatePath(`/articles/${slug}`);
+    return { ok: true, id: postId };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return { ok: false, error: msg };
+  }
+}
+
+export async function createPostV2Action(
+  formData: FormData,
+): Promise<PostSaveResult> {
+  const auth = await requireAdmin();
+  if (!auth) return { ok: false, error: "Unauthorized: admin only." };
+
+  const { supabase, userId } = auth;
+
+  try {
+    const f = readPostFormMeta(formData);
+    if (!f.title) return { ok: false, error: "Title is required." };
+
+    const prepared = await prepareV2ContentBlocksFromForm(
+      supabase,
+      userId,
+      formData,
+      null,
+    );
+    if (!prepared.ok) return { ok: false, error: prepared.error };
+
+    const card = await uploadImageField(supabase, userId, formData, "card_image");
+    const hero = await uploadImageField(supabase, userId, formData, "hero_image");
+
+    const baseSlug = slugify(f.slugInput || f.title);
+    const slug = await resolveUniqueSlug(supabase, baseSlug);
+
+    const slotForCreate = f.homepage_slot;
+    if (slotForCreate && f.status === "published") {
+      await clearPublishedHomepageSlotConflicts(supabase, slotForCreate, null);
+    }
+
+    const insert = {
+      title: f.title,
+      slug,
+      excerpt: f.excerpt,
+      category: f.category,
+      status: f.status,
+      homepage_slot: f.homepage_slot,
+      card_image: card,
+      hero_image: hero,
+      inline_image: null,
+      body_part_1: null,
+      body_part_2: null,
+      author_id: userId,
+      content_blocks: prepared.blocks,
+      ...emptySectionFieldsPayload(),
+    };
+
+    const { data, error } = await supabase.from("posts").insert(insert).select("id").single();
+
+    if (error || !data) {
+      console.error("[create post v2]", error?.message);
+      return {
+        ok: false,
+        error: error?.message ?? "Insert failed.",
+      };
+    }
+
+    const tagIds = readTagIdsFromFormData(formData);
+    try {
+      await syncPostTags(supabase, data.id, tagIds);
+      revalidateTagPaths(await fetchTagSlugsByIds(tagIds));
+    } catch (tagErr) {
+      const msg = tagErr instanceof Error ? tagErr.message : String(tagErr);
+      console.error("[create post v2] tags", msg);
+      return { ok: false, error: msg };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/admin");
+    return { ok: true, id: data.id };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[createPostV2Action]", msg);
+    return { ok: false, error: msg };
+  }
+}
+
+export async function updatePostV2Action(
+  postId: string,
+  formData: FormData,
+): Promise<PostSaveResult> {
+  const auth = await requireAdmin();
+  if (!auth) return { ok: false, error: "Unauthorized: admin only." };
+  const { supabase, userId } = auth;
+
+  try {
+    const f = readPostFormMeta(formData);
+    if (!f.title) return { ok: false, error: "Title is required." };
+
+    const { data: existing, error: exErr } = await supabase
+      .from("posts")
+      .select("*")
+      .eq("id", postId)
+      .single();
+    if (exErr || !existing) {
+      return { ok: false, error: exErr?.message ?? "Post not found." };
+    }
+
+    const row = existing as PostRow;
+
+    if (!postHasContentBlocks(row)) {
+      return {
+        ok: false,
+        error:
+          "This post is not a V2 block article. Use the classic editor at Edit post.",
+      };
+    }
+
+    let card = row.card_image as string | null;
+    let hero = row.hero_image as string | null;
+
+    const clearCard = String(formData.get("clear_card_image") ?? "") === "1";
+    const clearHero = String(formData.get("clear_hero_image") ?? "") === "1";
+
+    const cardHeroPathsToRemove: string[] = [];
+
+    const newCard = await uploadImageField(supabase, userId, formData, "card_image");
+    if (newCard) {
+      if (row.card_image && row.card_image !== newCard) cardHeroPathsToRemove.push(row.card_image);
+      card = newCard;
+    } else if (clearCard) {
+      if (row.card_image) cardHeroPathsToRemove.push(row.card_image);
+      card = null;
+    }
+
+    const newHero = await uploadImageField(supabase, userId, formData, "hero_image");
+    if (newHero) {
+      if (row.hero_image && row.hero_image !== newHero) cardHeroPathsToRemove.push(row.hero_image);
+      hero = newHero;
+    } else if (clearHero) {
+      if (row.hero_image) cardHeroPathsToRemove.push(row.hero_image);
+      hero = null;
+    }
+
+    const prepared = await prepareV2ContentBlocksFromForm(
+      supabase,
+      userId,
+      formData,
+      row,
+    );
+    if (!prepared.ok) return { ok: false, error: prepared.error };
+
+    const baseSlug = slugify(f.slugInput || f.title);
+    const slug = await resolveUniqueSlug(supabase, baseSlug, postId);
+
+    const slotForUpdate = f.homepage_slot;
+    if (slotForUpdate && f.status === "published") {
+      await clearPublishedHomepageSlotConflicts(supabase, slotForUpdate, postId);
+    }
+
+    const tagIds = readTagIdsFromFormData(formData);
+    const oldTagSlugs = await fetchTagSlugsForPostId(postId);
+
+    const patch = {
+      title: f.title,
+      slug,
+      excerpt: f.excerpt,
+      category: f.category,
+      status: f.status,
+      homepage_slot: f.homepage_slot,
+      card_image: card,
+      hero_image: hero,
+      content_blocks: prepared.blocks,
+    };
+
+    const { error } = await supabase.from("posts").update(patch).eq("id", postId);
+    if (error) {
+      console.error("[update post v2]", error.message);
+      return { ok: false, error: error.message };
+    }
+
+    await removeStoragePaths(
+      supabase,
+      clearPathsUnderUser(
+        [...cardHeroPathsToRemove, ...prepared.pathsToRemove],
+        userId,
+      ),
+    );
+
+    try {
+      await syncPostTags(supabase, postId, tagIds);
+      const newSlugs = await fetchTagSlugsByIds(tagIds);
+      revalidateTagPaths([...oldTagSlugs, ...newSlugs]);
+    } catch (tagErr) {
+      const msg = tagErr instanceof Error ? tagErr.message : String(tagErr);
+      console.error("[update post v2] tags", msg);
       return { ok: false, error: msg };
     }
 
