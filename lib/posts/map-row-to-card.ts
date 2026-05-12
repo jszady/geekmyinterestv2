@@ -19,8 +19,7 @@ export async function postRowToCardData(
   row: PostRow,
   opts?: { imagePath?: string | null; alt?: string },
 ): Promise<PostCardData> {
-  const imgPath =
-    opts?.imagePath ?? row.card_image ?? row.hero_image ?? null;
+  const imgPath = opts?.imagePath ?? row.card_image ?? null;
   const src = (await postImagePublicUrl(imgPath)) ?? "/images/logo/logo.png";
   return {
     href: `/articles/${row.slug}`,

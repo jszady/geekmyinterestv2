@@ -67,6 +67,8 @@ export function AdminPostForm(props: Props) {
 
   const initialClears = useMemo<Record<string, boolean>>(() => ({}), []);
   const [clearFlags, setClearFlags] = useState<Record<string, boolean>>(initialClears);
+  const [clearCardImage, setClearCardImage] = useState(false);
+  const [clearHeroImage, setClearHeroImage] = useState(false);
 
   function toggleClear(fieldName: string) {
     setClearFlags((prev) => ({ ...prev, [fieldName]: !prev[fieldName] }));
@@ -239,22 +241,66 @@ export function AdminPostForm(props: Props) {
       </aside>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {(["card_image", "hero_image"] as const).map((name) => (
-          <div key={name}>
-            <span className={labelClass}>{name.replaceAll("_", " ")}</span>
-            <input
-              name={name}
-              type="file"
-              accept="image/*"
-              className="mt-2 block w-full text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
-            />
-            {post?.[name] ? (
-              <p className="mt-1 break-all text-[11px] text-zinc-500">
-                Current: {String(post[name])}
+        <div>
+          <input type="hidden" name="clear_card_image" value={clearCardImage ? "1" : "0"} />
+          <label className={labelClass} htmlFor="post-card-image">
+            Card image
+          </label>
+          <p className="mt-0.5 text-[11px] text-zinc-500">
+            Used for homepage and article cards only — independent from the hero.
+          </p>
+          <input
+            id="post-card-image"
+            name="card_image"
+            type="file"
+            accept="image/*"
+            className="mt-2 block w-full min-w-0 text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
+          />
+          {post?.card_image ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="min-w-0 flex-1 break-all text-[11px] text-zinc-500">
+                Current: {post.card_image}
               </p>
-            ) : null}
-          </div>
-        ))}
+              <button
+                type="button"
+                onClick={() => setClearCardImage((c) => !c)}
+                className="min-h-[36px] shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+              >
+                {clearCardImage ? "Undo clear card" : "Clear card image"}
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <div>
+          <input type="hidden" name="clear_hero_image" value={clearHeroImage ? "1" : "0"} />
+          <label className={labelClass} htmlFor="post-hero-image">
+            Hero image
+          </label>
+          <p className="mt-0.5 text-[11px] text-zinc-500">
+            Large image at the top of the article only — not used for listing cards.
+          </p>
+          <input
+            id="post-hero-image"
+            name="hero_image"
+            type="file"
+            accept="image/*"
+            className="mt-2 block w-full min-w-0 text-xs text-zinc-400 file:mr-3 file:rounded-md file:border file:border-white/10 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-100"
+          />
+          {post?.hero_image ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <p className="min-w-0 flex-1 break-all text-[11px] text-zinc-500">
+                Current: {post.hero_image}
+              </p>
+              <button
+                type="button"
+                onClick={() => setClearHeroImage((c) => !c)}
+                className="min-h-[36px] shrink-0 rounded-lg border border-white/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-300 hover:border-red-400/45 hover:text-red-200"
+              >
+                {clearHeroImage ? "Undo clear hero" : "Clear hero image"}
+              </button>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="space-y-8 border-t border-white/[0.08] pt-8">

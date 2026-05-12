@@ -31,7 +31,7 @@ export default async function AdminPostPreviewPage({
   if (!post) notFound();
 
   const [heroUrl, profiles, comments, tags] = await Promise.all([
-    postImagePublicUrl(post.hero_image ?? post.card_image),
+    postImagePublicUrl(post.hero_image),
     fetchProfilesByIds([post.author_id]),
     fetchCommentsForPost(post.id),
     fetchTagsForPostId(post.id),

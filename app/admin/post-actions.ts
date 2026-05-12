@@ -35,16 +35,23 @@ async function requireAdmin() {
   return { supabase, userId: gate.session.user.id };
 }
 
+function firstUploadedFile(formData: FormData, field: string): File | null {
+  for (const entry of formData.getAll(field)) {
+    if (!entry || typeof entry === "string") continue;
+    const file = entry as File;
+    if (file.size > 0) return file;
+  }
+  return null;
+}
+
 async function uploadImageField(
   supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
   userId: string,
   formData: FormData,
   field: string,
 ): Promise<string | null> {
-  const raw = formData.get(field);
-  if (!raw || typeof raw === "string") return null;
-  const file = raw as File;
-  if (!file.size) return null;
+  const file = firstUploadedFile(formData, field);
+  if (!file) return null;
   const checked = await validateAdminImageUpload(file);
   if (!checked.ok) {
     throw new Error(`${field}: ${checked.error}`);
@@ -313,10 +320,28 @@ export async function updatePostAction(
     let card = row.card_image as string | null;
     let hero = row.hero_image as string | null;
 
+    const clearCard = String(formData.get("clear_card_image") ?? "") === "1";
+    const clearHero = String(formData.get("clear_hero_image") ?? "") === "1";
+
+    const cardHeroPathsToRemove: string[] = [];
+
     const newCard = await uploadImageField(supabase, userId, formData, "card_image");
-    if (newCard) card = newCard;
+    if (newCard) {
+      if (row.card_image && row.card_image !== newCard) cardHeroPathsToRemove.push(row.card_image);
+      card = newCard;
+    } else if (clearCard) {
+      if (row.card_image) cardHeroPathsToRemove.push(row.card_image);
+      card = null;
+    }
+
     const newHero = await uploadImageField(supabase, userId, formData, "hero_image");
-    if (newHero) hero = newHero;
+    if (newHero) {
+      if (row.hero_image && row.hero_image !== newHero) cardHeroPathsToRemove.push(row.hero_image);
+      hero = newHero;
+    } else if (clearHero) {
+      if (row.hero_image) cardHeroPathsToRemove.push(row.hero_image);
+      hero = null;
+    }
 
     const {
       payload: sections,
@@ -358,7 +383,10 @@ export async function updatePostAction(
       return { ok: false, error: error.message };
     }
 
-    await removeStoragePaths(supabase, clearPathsUnderUser(clearedStoragePaths, userId));
+    await removeStoragePaths(
+      supabase,
+      clearPathsUnderUser([...clearedStoragePaths, ...cardHeroPathsToRemove], userId),
+    );
 
     try {
       await syncPostTags(supabase, postId, tagIds);

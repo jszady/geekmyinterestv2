@@ -30,7 +30,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!post) return { title: "Article" };
 
   const description = post.excerpt?.trim().slice(0, 155) ?? `${post.title} — Geek My Interest`;
-  const ogImageUrl = await postImagePublicUrl(post.hero_image ?? post.card_image);
+  const ogImageUrl =
+    (await postImagePublicUrl(post.hero_image)) ??
+    (await postImagePublicUrl(post.card_image));
 
   return {
     title: post.title,
@@ -59,7 +61,7 @@ export default async function ArticlePage({ params }: { params: Promise<Params> 
   if (!post) notFound();
 
   const [heroUrl, profiles, comments, session, tags] = await Promise.all([
-    postImagePublicUrl(post.hero_image ?? post.card_image),
+    postImagePublicUrl(post.hero_image),
     fetchProfilesByIds([post.author_id]),
     fetchCommentsForPost(post.id),
     getSessionUser(),
