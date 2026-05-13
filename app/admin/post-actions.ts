@@ -11,7 +11,10 @@ import {
   sectionTextFormName,
   sectionVideoFormName,
 } from "@/lib/posts/section-fields";
-import { validateAdminImageUpload } from "@/lib/storage/validate-admin-image-upload";
+import {
+  adminImageContentTypeForStorage,
+  validateAdminImageUpload,
+} from "@/lib/storage/validate-admin-image-upload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { resolveUniqueSlug, slugify } from "@/lib/posts/slug";
 import { normalizeRichTextForStorage } from "@/lib/content/rich-text-storage";
@@ -66,29 +69,37 @@ async function tryUploadImageField(
   }
   const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
   const path = `${userId}/${Date.now()}-${field}-${safe}`;
+  const contentType = adminImageContentTypeForStorage(file);
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
     upsert: false,
+    ...(contentType !== "application/octet-stream"
+      ? { contentType }
+      : {}),
   });
   if (error) {
     console.error(`[upload ${field}]`, error.message, error);
+    if (process.env.NODE_ENV === "development") {
+      console.info("[admin-image-upload] storage error", {
+        field,
+        contentType,
+        message: error.message,
+      });
+    }
     return {
       path: null,
       error: `Upload failed (${field}): ${error.message}`,
     };
   }
+  if (process.env.NODE_ENV === "development") {
+    const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    console.info("[admin-image-upload] storage ok", {
+      field,
+      contentType,
+      publicUrl: pub.publicUrl,
+    });
+  }
   return { path };
-}
-
-async function uploadImageField(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  userId: string,
-  formData: FormData,
-  field: string,
-): Promise<string | null> {
-  const r = await tryUploadImageField(supabase, userId, formData, field);
-  if (r.error) throw new Error(r.error);
-  return r.path;
 }
 
 /**
@@ -279,7 +290,7 @@ async function prepareV2ContentBlocksFromForm(
   formData: FormData,
   existing: PostRow | null,
 ): Promise<
-  | { ok: true; blocks: ContentBlock[]; pathsToRemove: string[] }
+  | { ok: true; blocks: ContentBlock[]; pathsToRemove: string[]; warnings: string[] }
   | { ok: false; error: string }
 > {
   const raw = String(formData.get("content_blocks_json") ?? "").trim();
@@ -296,8 +307,12 @@ async function prepareV2ContentBlocksFromForm(
     return { ok: false, error: "Invalid content blocks data." };
   }
 
-  const uploadWrapper = (fd: FormData, field: string) =>
-    uploadImageField(supabase, userId, fd, field);
+  const blockUploadWarnings: string[] = [];
+  const uploadWrapper = async (fd: FormData, field: string) => {
+    const r = await tryUploadImageField(supabase, userId, fd, field);
+    if (r.error) blockUploadWarnings.push(r.error);
+    return r.path;
+  };
 
   const merged = await mergeV2ImageBlocksFromFormData(draft, formData, uploadWrapper);
 
@@ -311,7 +326,7 @@ async function prepareV2ContentBlocksFromForm(
   const newSet = new Set(newPaths);
   const pathsToRemove = oldPaths.filter((p) => !newSet.has(p));
 
-  return { ok: true, blocks: validated.blocks, pathsToRemove };
+  return { ok: true, blocks: validated.blocks, pathsToRemove, warnings: blockUploadWarnings };
 }
 
 export async function createPostAction(formData: FormData): Promise<PostSaveResult> {
@@ -546,8 +561,13 @@ export async function createPostV2Action(
     );
     if (!prepared.ok) return { ok: false, error: prepared.error };
 
-    const card = await uploadImageField(supabase, userId, formData, "card_image");
-    const hero = await uploadImageField(supabase, userId, formData, "hero_image");
+    const warnings = [...prepared.warnings];
+    const cardR = await tryUploadImageField(supabase, userId, formData, "card_image");
+    if (cardR.error) warnings.push(cardR.error);
+    const heroR = await tryUploadImageField(supabase, userId, formData, "hero_image");
+    if (heroR.error) warnings.push(heroR.error);
+    const card = cardR.path;
+    const hero = heroR.path;
 
     const baseSlug = slugify(f.slugInput || f.title);
     const slug = await resolveUniqueSlug(supabase, baseSlug);
@@ -596,7 +616,11 @@ export async function createPostV2Action(
 
     revalidatePath("/");
     revalidatePath("/admin");
-    return { ok: true, id: data.id };
+    return {
+      ok: true,
+      id: data.id,
+      warnings: warnings.length ? warnings : undefined,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[createPostV2Action]", msg);
@@ -642,20 +666,23 @@ export async function updatePostV2Action(
     const clearHero = String(formData.get("clear_hero_image") ?? "") === "1";
 
     const cardHeroPathsToRemove: string[] = [];
+    const uploadWarnings: string[] = [];
 
-    const newCard = await uploadImageField(supabase, userId, formData, "card_image");
-    if (newCard) {
-      if (row.card_image && row.card_image !== newCard) cardHeroPathsToRemove.push(row.card_image);
-      card = newCard;
+    const cardR = await tryUploadImageField(supabase, userId, formData, "card_image");
+    if (cardR.error) uploadWarnings.push(cardR.error);
+    if (cardR.path) {
+      if (row.card_image && row.card_image !== cardR.path) cardHeroPathsToRemove.push(row.card_image);
+      card = cardR.path;
     } else if (clearCard) {
       if (row.card_image) cardHeroPathsToRemove.push(row.card_image);
       card = null;
     }
 
-    const newHero = await uploadImageField(supabase, userId, formData, "hero_image");
-    if (newHero) {
-      if (row.hero_image && row.hero_image !== newHero) cardHeroPathsToRemove.push(row.hero_image);
-      hero = newHero;
+    const heroR = await tryUploadImageField(supabase, userId, formData, "hero_image");
+    if (heroR.error) uploadWarnings.push(heroR.error);
+    if (heroR.path) {
+      if (row.hero_image && row.hero_image !== heroR.path) cardHeroPathsToRemove.push(row.hero_image);
+      hero = heroR.path;
     } else if (clearHero) {
       if (row.hero_image) cardHeroPathsToRemove.push(row.hero_image);
       hero = null;
@@ -668,6 +695,8 @@ export async function updatePostV2Action(
       row,
     );
     if (!prepared.ok) return { ok: false, error: prepared.error };
+
+    for (const w of prepared.warnings) uploadWarnings.push(w);
 
     const baseSlug = slugify(f.slugInput || f.title);
     const slug = await resolveUniqueSlug(supabase, baseSlug, postId);
@@ -719,7 +748,11 @@ export async function updatePostV2Action(
     revalidatePath("/");
     revalidatePath("/admin");
     revalidatePath(`/articles/${slug}`);
-    return { ok: true, id: postId };
+    return {
+      ok: true,
+      id: postId,
+      warnings: uploadWarnings.length ? uploadWarnings : undefined,
+    };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return { ok: false, error: msg };

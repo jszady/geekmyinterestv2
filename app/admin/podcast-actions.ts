@@ -5,7 +5,10 @@ import { normalizeRichTextForStorage } from "@/lib/content/rich-text-storage";
 import { getSessionUser } from "@/lib/auth/session";
 import type { PodcastEpisodeRow } from "@/lib/database.types";
 import { resolveUniquePodcastSlug, slugifyPodcast } from "@/lib/podcast/slug";
-import { validateAdminImageUpload } from "@/lib/storage/validate-admin-image-upload";
+import {
+  adminImageContentTypeForStorage,
+  validateAdminImageUpload,
+} from "@/lib/storage/validate-admin-image-upload";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -40,9 +43,11 @@ async function uploadThumbnail(
 
   const safe = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 80);
   const path = `${userId}/${Date.now()}-podcast-${safe}`;
+  const contentType = adminImageContentTypeForStorage(file);
   const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
     cacheControl: "3600",
     upsert: false,
+    ...(contentType !== "application/octet-stream" ? { contentType } : {}),
   });
   if (error) throw new Error(`Thumbnail upload failed: ${error.message}`);
   return path;
