@@ -6,6 +6,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useActionState, useEffect } from "react";
 
+/** Set true when Google OAuth is configured and working — button stays in code below. */
+const SHOW_GOOGLE_OAUTH = false;
+
 const initial: AuthActionState = { ok: false, error: null };
 
 export function LoginForm() {
@@ -47,17 +50,21 @@ export function LoginForm() {
           {state.error}
         </p>
       ) : null}
-      <GoogleOAuthButton
-        nextPath={
-          nextParam && nextParam.startsWith("/") ? nextParam : "/"
-        }
-      />
-      <div className="relative py-1">
-        <div className="h-px bg-white/[0.08]" />
-        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#02040d] px-3 text-xs uppercase tracking-wider text-zinc-500">
-          or
-        </span>
-      </div>
+      {SHOW_GOOGLE_OAUTH ? (
+        <>
+          <GoogleOAuthButton
+            nextPath={
+              nextParam && nextParam.startsWith("/") ? nextParam : "/"
+            }
+          />
+          <div className="relative py-1">
+            <div className="h-px bg-white/[0.08]" />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#02040d] px-3 text-xs uppercase tracking-wider text-zinc-500">
+              or
+            </span>
+          </div>
+        </>
+      ) : null}
       <form action={formAction} className="space-y-4" aria-busy={pending}>
         <div>
           <label className="mb-1.5 block text-sm font-medium text-zinc-300" htmlFor="email">

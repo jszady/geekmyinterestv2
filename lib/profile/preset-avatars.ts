@@ -2,8 +2,8 @@
 export const DEFAULT_PROFILE_IMAGE_PATH = "/images/profile-pictures/default-profile.png" as const;
 
 /**
- * Preset JPGs shipped under `public/images/profile-pictures/` (see that folder; keep in sync).
- * Previously used .png names (robot-blue, etc.) — removed; only real filenames here.
+ * Preset JPGs under `public/images/profile-pictures/`.
+ * Keep in sync with files on disk (currently pfp1–pfp44 and pfp46–pfp49; no pfp45.jpg).
  */
 const PFP_JPG_PATHS = [
   "/images/profile-pictures/pfp1.jpg",
@@ -32,6 +32,28 @@ const PFP_JPG_PATHS = [
   "/images/profile-pictures/pfp24.jpg",
   "/images/profile-pictures/pfp25.jpg",
   "/images/profile-pictures/pfp26.jpg",
+  "/images/profile-pictures/pfp27.jpg",
+  "/images/profile-pictures/pfp28.jpg",
+  "/images/profile-pictures/pfp29.jpg",
+  "/images/profile-pictures/pfp30.jpg",
+  "/images/profile-pictures/pfp31.jpg",
+  "/images/profile-pictures/pfp32.jpg",
+  "/images/profile-pictures/pfp33.jpg",
+  "/images/profile-pictures/pfp34.jpg",
+  "/images/profile-pictures/pfp35.jpg",
+  "/images/profile-pictures/pfp36.jpg",
+  "/images/profile-pictures/pfp37.jpg",
+  "/images/profile-pictures/pfp38.jpg",
+  "/images/profile-pictures/pfp39.jpg",
+  "/images/profile-pictures/pfp40.jpg",
+  "/images/profile-pictures/pfp41.jpg",
+  "/images/profile-pictures/pfp42.jpg",
+  "/images/profile-pictures/pfp43.jpg",
+  "/images/profile-pictures/pfp44.jpg",
+  "/images/profile-pictures/pfp46.jpg",
+  "/images/profile-pictures/pfp47.jpg",
+  "/images/profile-pictures/pfp48.jpg",
+  "/images/profile-pictures/pfp49.jpg",
 ] as const;
 
 /** All preset paths allowlisted for signup/settings and `profiles.avatar_url` preset values. */
