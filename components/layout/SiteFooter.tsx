@@ -37,7 +37,7 @@ export function SiteFooter() {
                 More to explore
               </h2>
               <p className="text-base leading-relaxed text-zinc-400 sm:text-lg">
-                Hot takes, deep dives, and reviews across gaming, anime, movies, shows, and tech
+                Hot takes, deep dives, and reviews across gaming, anime, movies, shows, comics, and tech
                 culture — plus the podcast when you want it in your ears.
               </p>
             </div>

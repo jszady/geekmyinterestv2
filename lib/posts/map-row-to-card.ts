@@ -1,17 +1,10 @@
 import type { PostCardData, PostCategory } from "@/components/feed/types";
 import type { PostRow } from "@/lib/database.types";
+import { isPostCategoryDb } from "@/lib/posts/categories";
 import { postImagePublicUrl } from "@/lib/posts/image-url";
 
-const CATEGORY_SET = new Set<PostCategory>([
-  "Movie",
-  "Show",
-  "Anime",
-  "Game",
-  "Tech",
-]);
-
 function toCategory(raw: string): PostCategory {
-  if (CATEGORY_SET.has(raw as PostCategory)) return raw as PostCategory;
+  if (isPostCategoryDb(raw)) return raw;
   return "Movie";
 }
 

@@ -1,18 +1,9 @@
-import type { PostCardData, PostCategory } from "@/components/feed/types";
+import type { PostCardData } from "@/components/feed/types";
 import type { HomepageLatestMeta } from "@/lib/posts/homepage";
-import type { LatestListCat } from "@/lib/posts/latest-list-params";
+import { categoryChannelLabel, LATEST_LIST_FILTERS } from "@/lib/posts/categories";
 import { latestListQueryString } from "@/lib/posts/latest-list-params";
 import Image from "next/image";
 import Link from "next/link";
-
-const FILTERS: { id: LatestListCat; label: string }[] = [
-  { id: "all", label: "ALL" },
-  { id: "movies", label: "MOVIES" },
-  { id: "tv", label: "TV" },
-  { id: "anime", label: "ANIME" },
-  { id: "gaming", label: "GAMING" },
-  { id: "tech", label: "TECH" },
-];
 
 function CommentGlyph({ className }: { className?: string }) {
   return (
@@ -68,7 +59,7 @@ export function LatestSection({ posts, latestMeta }: Props) {
           className="mt-5 flex flex-wrap gap-2 md:mt-6"
           aria-label="Filter latest stories by topic"
         >
-          {FILTERS.map(({ id, label }) => {
+          {LATEST_LIST_FILTERS.map(({ id, label }) => {
             const isActive = activeCat === id;
             const href = `/${latestListQueryString(id, 1)}`;
             return (
@@ -143,23 +134,6 @@ export function LatestSection({ posts, latestMeta }: Props) {
   );
 }
 
-function categoryChannel(cat: PostCategory): string {
-  switch (cat) {
-    case "Movie":
-      return "MOVIES";
-    case "Show":
-      return "TV";
-    case "Anime":
-      return "ANIME";
-    case "Game":
-      return "GAMING";
-    case "Tech":
-      return "TECH";
-    default:
-      return cat;
-  }
-}
-
 function LatestRow({ post }: { post: PostCardData }) {
   const excerpt =
     post.excerpt ?? post.title.slice(0, 140) + (post.title.length > 140 ? "…" : "");
@@ -189,7 +163,7 @@ function LatestRow({ post }: { post: PostCardData }) {
         <p className="text-xs font-medium text-zinc-500 sm:text-sm">
           {when}
           <span className="mx-1.5 text-zinc-600">·</span>
-          <span className="text-cyan-400/90">{categoryChannel(post.category)}</span>
+          <span className="text-cyan-400/90">{categoryChannelLabel(post.category)}</span>
         </p>
         <h3 className="mt-1.5 text-lg font-bold leading-snug tracking-tight text-white group-hover:text-cyan-100 sm:text-[1.45rem]">
           {post.title}

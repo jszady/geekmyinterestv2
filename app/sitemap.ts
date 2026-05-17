@@ -1,10 +1,9 @@
 import type { MetadataRoute } from "next";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
+import { CATEGORY_SLUGS } from "@/lib/posts/categories";
+import { SITE_URL } from "@/lib/seo";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const siteUrl = getPublicSiteUrl();
-
-const CATEGORY_SLUGS = ["movies", "anime", "shows", "games", "tech"];
+const siteUrl = SITE_URL;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = await createSupabaseServerClient();

@@ -16,7 +16,7 @@ import {
   fetchPublishedPodcastEpisodesCount,
   fetchPublishedPodcastEpisodesGridPage,
 } from "@/lib/podcast/queries";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
+import { buildPageMetadata, getAbsoluteUrl } from "@/lib/seo";
 
 const PODCAST_GRID_PER_PAGE = 25;
 
@@ -32,11 +32,9 @@ function parsePodcastGridPage(
   return Number.isFinite(n) && n >= 1 ? n : 1;
 }
 
-function podcastCanonical(siteBase: string, page: number): string {
-  const base = siteBase.replace(/\/$/, "");
-  const url = new URL(`${base}/podcast`);
-  if (page > 1) url.searchParams.set("page", String(page));
-  return url.toString();
+function podcastCanonicalPath(page: number): string {
+  if (page <= 1) return "/podcast";
+  return `/podcast?page=${page}`;
 }
 
 type PageProps = {
@@ -46,28 +44,18 @@ type PageProps = {
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const sp = searchParams ? await searchParams : undefined;
   const page = parsePodcastGridPage(sp?.page);
-  const siteUrl = getPublicSiteUrl();
-  const canonical = podcastCanonical(siteUrl, page);
   const title = page > 1 ? `${basePodcastTitle} · Page ${page}` : basePodcastTitle;
+  const ogImage = getAbsoluteUrl("/images/podtrans.png");
 
-  return {
+  return buildPageMetadata({
     title,
     description: basePodcastDescription,
-    alternates: { canonical },
-    openGraph: {
-      title: "Geek My Interest Podcast",
-      description: basePodcastDescription,
-      url: canonical,
-      type: "website",
-      images: [{ url: "/images/podtrans.png", alt: "Geek My Interest Podcast" }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: "Geek My Interest Podcast",
-      description: basePodcastDescription,
-      images: ["/images/podtrans.png"],
-    },
-  };
+    canonicalPath: podcastCanonicalPath(page),
+    absoluteTitle: true,
+    ogType: "website",
+    ogImageUrl: ogImage,
+    ogImageAlt: "Geek My Interest Podcast",
+  });
 }
 
 async function episodeRowToView(row: PodcastEpisodeRow): Promise<PodcastEpisodeView> {

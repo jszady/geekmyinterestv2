@@ -33,12 +33,9 @@ export const PROFILES_PUBLIC_SELECT_COLUMNS =
 
 export type PostStatus = "draft" | "published";
 
-export type PostCategoryDb =
-  | "Movie"
-  | "Anime"
-  | "Show"
-  | "Game"
-  | "Tech";
+import type { PostCategoryDb } from "@/lib/posts/categories";
+
+export type { PostCategoryDb };
 
 export type HomepageSlot =
   | "main_feature"

@@ -13,7 +13,7 @@ import { toYouTubeEmbedUrl } from "@/lib/posts/section-video";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useRef, useState } from "react";
 
-const CATEGORIES = ["Movie", "Anime", "Show", "Game", "Tech"] as const;
+import { POST_CATEGORY_DB_VALUES } from "@/lib/posts/categories";
 const STATUSES = ["draft", "published"] as const;
 const SLOTS = [
   { value: "", label: "None" },
@@ -347,7 +347,7 @@ export function AdminPostFormV2(props: Props) {
             defaultValue={post?.category ?? "Movie"}
             className={fieldClass}
           >
-            {CATEGORIES.map((c) => (
+            {POST_CATEGORY_DB_VALUES.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>

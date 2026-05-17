@@ -1,5 +1,6 @@
 import { EditorialLeadSection } from "@/components/home/EditorialLeadSection";
 import { LatestSection } from "@/components/home/LatestSection";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
 import { Navbar } from "@/components/layout/Navbar";
 import { buildHomepageData } from "@/lib/posts/homepage";
@@ -7,23 +8,19 @@ import {
   parseLatestListCat,
   parseLatestListPage,
 } from "@/lib/posts/latest-list-params";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
+import { organizationSchema, webSiteSchema } from "@/lib/schema";
+import { buildHomeMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
-const baseTitle = "Geek My Interest — Gaming, Anime, Movies & Tech";
-const baseDescription =
-  "Hot takes, deep dives, and reviews across gaming, anime, movies, shows, and tech culture.";
-
-function homeCanonicalUrl(
-  siteBase: string,
+function homeCanonicalPath(
   cat: ReturnType<typeof parseLatestListCat>,
   page: number,
 ): string {
-  const base = siteBase.replace(/\/$/, "");
-  const url = new URL(`${base}/`);
-  if (cat !== "all") url.searchParams.set("cat", cat);
-  if (page > 1) url.searchParams.set("page", String(page));
-  return url.toString();
+  const qs = new URLSearchParams();
+  if (cat !== "all") qs.set("cat", cat);
+  if (page > 1) qs.set("page", String(page));
+  const q = qs.toString();
+  return q ? `/?${q}` : "/";
 }
 
 type PageProps = {
@@ -34,24 +31,16 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const sp = searchParams ? await searchParams : undefined;
   const page = parseLatestListPage(sp?.page);
   const cat = parseLatestListCat(sp?.cat);
-  const siteUrl = getPublicSiteUrl();
-  const canonical = homeCanonicalUrl(siteUrl, cat, page);
+  const canonicalPath = homeCanonicalPath(cat, page);
 
-  const title =
-    page > 1 ? `${baseTitle} · Page ${page}` : baseTitle;
+  if (page > 1) {
+    return buildHomeMetadata({
+      title: `Geek My Interest | Anime, Gaming, Movies, Shows & Geek Culture · Page ${page}`,
+      canonicalPath,
+    });
+  }
 
-  return {
-    title,
-    description: baseDescription,
-    alternates: { canonical },
-    openGraph: {
-      title: "Geek My Interest",
-      description: baseDescription,
-      url: canonical,
-      type: "website",
-    },
-    twitter: { card: "summary_large_image" },
-  };
+  return buildHomeMetadata({ canonicalPath });
 }
 
 export default async function Home({ searchParams }: PageProps) {
@@ -69,6 +58,7 @@ export default async function Home({ searchParams }: PageProps) {
 
   return (
     <main className="relative min-h-dvh bg-[#02040d] text-zinc-100">
+      <JsonLd data={[webSiteSchema(), organizationSchema()]} />
       <SiteBackdrop />
       {adminDenied ? (
         <div className="relative z-40 mx-auto max-w-[1800px] px-5 pt-24 text-sm text-amber-100 sm:px-8 lg:px-12">

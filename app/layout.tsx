@@ -1,20 +1,24 @@
 import { ConditionalSiteFooter } from "@/components/layout/ConditionalSiteFooter";
 import { FooterVisibilityProvider } from "@/components/layout/footer-visibility-context";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
+import {
+  DEFAULT_DESCRIPTION,
+  DEFAULT_OG_IMAGE_PATH,
+  DEFAULT_TITLE,
+  SITE_URL,
+  TWITTER_SITE,
+  getAbsoluteUrl,
+} from "@/lib/seo";
 import type { Metadata } from "next";
 import { geistSans, pressStart2P } from "./fonts";
 import "./globals.css";
 
-const siteUrl = getPublicSiteUrl();
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Geek My Interest",
-    template: "%s — Geek My Interest",
+    default: DEFAULT_TITLE,
+    template: "%s | Geek My Interest",
   },
-  description:
-    "Hot takes, deep dives, and reviews across gaming, anime, movies, shows, and tech culture.",
+  description: DEFAULT_DESCRIPTION,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -28,10 +32,24 @@ export const metadata: Metadata = {
     siteName: "Geek My Interest",
     type: "website",
     locale: "en_US",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    url: SITE_URL,
+    images: [
+      {
+        url: getAbsoluteUrl(DEFAULT_OG_IMAGE_PATH),
+        width: 1200,
+        height: 630,
+        alt: "Geek My Interest",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@geekmyinterest",
+    site: TWITTER_SITE,
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
+    images: [getAbsoluteUrl(DEFAULT_OG_IMAGE_PATH)],
   },
 };
 

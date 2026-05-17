@@ -1,4 +1,6 @@
-export type PostCategory = "Movie" | "Show" | "Anime" | "Game" | "Tech";
+import type { PostCategoryDb } from "@/lib/posts/categories";
+
+export type PostCategory = PostCategoryDb;
 
 export type PostCardVariant =
   | "featured"

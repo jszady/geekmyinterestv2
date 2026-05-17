@@ -1,24 +1,21 @@
 import { ContactHub } from "@/components/contact/ContactHub";
 import { Navbar } from "@/components/layout/Navbar";
 import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
+import { buildPageMetadata, getAbsoluteUrl, DEFAULT_OG_IMAGE_PATH } from "@/lib/seo";
 import type { Metadata } from "next";
 
-const siteUrl = getPublicSiteUrl();
+const description =
+  "Advertise, send a listener letter for the podcast, or get in touch — Geek My Interest contact hub.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: "Contact | Geek My Interest",
-  description:
-    "Advertise, send a listener letter for the podcast, or get in touch — Geek My Interest contact hub.",
-  alternates: { canonical: `${siteUrl}/contact` },
-  openGraph: {
-    title: "Contact — Geek My Interest",
-    description:
-      "Advertise, send a listener letter for the podcast, or get in touch — Geek My Interest contact hub.",
-    url: `${siteUrl}/contact`,
-    type: "website",
-  },
-};
+  description,
+  canonicalPath: "/contact",
+  absoluteTitle: true,
+  ogType: "website",
+  ogImageUrl: getAbsoluteUrl(DEFAULT_OG_IMAGE_PATH),
+  ogImageAlt: "Geek My Interest",
+});
 
 export default function ContactPage() {
   return (

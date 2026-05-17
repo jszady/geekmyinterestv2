@@ -1,67 +1,62 @@
 import type { PostCardData } from "@/components/feed/types";
 import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
 import { Navbar } from "@/components/layout/Navbar";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  CATEGORY_BY_SLUG,
+  CATEGORY_SEO,
+  CATEGORY_SLUGS,
+  type PostCategorySlug,
+} from "@/lib/posts/categories";
 import { postRowToCardData } from "@/lib/posts/map-row-to-card";
 import { fetchPublishedPostsByCategory } from "@/lib/posts/queries";
+import { categoryBreadcrumbs } from "@/lib/schema";
+import {
+  buildPageMetadata,
+  getAbsoluteUrl,
+  DEFAULT_OG_IMAGE_PATH,
+} from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
-import { getPublicSiteUrl } from "@/lib/site-public-url";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-const siteUrl = getPublicSiteUrl();
-
-const SLUG_TO_DB: Record<string, string> = {
-  movies: "Movie",
-  anime: "Anime",
-  shows: "Show",
-  games: "Game",
-  tech: "Tech",
-};
-
-const SLUG_TO_LABEL: Record<string, string> = {
-  movies: "Movies",
-  anime: "Anime",
-  shows: "Shows",
-  games: "Games",
-  tech: "Tech",
-};
 
 type Params = { slug: string };
 
 export function generateStaticParams() {
-  return Object.keys(SLUG_TO_DB).map((slug) => ({ slug }));
+  return CATEGORY_SLUGS.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const label = SLUG_TO_LABEL[slug];
-  if (!label) return { title: "Category — Geek My Interest" };
-  return {
-    title: `${label} Articles`,
-    description: `Browse all ${label.toLowerCase()} reviews, news, and analysis on Geek My Interest.`,
-    alternates: { canonical: `${siteUrl}/category/${slug}` },
-    openGraph: {
-      title: `${label} — Geek My Interest`,
-      description: `Browse all ${label.toLowerCase()} reviews, news, and analysis on Geek My Interest.`,
-      url: `${siteUrl}/category/${slug}`,
-      type: "website",
-    },
-    twitter: { card: "summary" },
-  };
+  const key = slug as PostCategorySlug;
+  const seo = CATEGORY_SEO[key];
+  if (!seo) return { title: "Category — Geek My Interest" };
+
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    canonicalPath: `/category/${slug}`,
+    absoluteTitle: true,
+    ogType: "website",
+    ogImageUrl: getAbsoluteUrl(DEFAULT_OG_IMAGE_PATH),
+    ogImageAlt: seo.title,
+  });
 }
 
 export default async function CategoryArchivePage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const dbCategory = SLUG_TO_DB[slug];
-  const label = SLUG_TO_LABEL[slug];
-  if (!dbCategory) notFound();
+  const key = slug as PostCategorySlug;
+  const entry = CATEGORY_BY_SLUG[key];
+  if (!entry) notFound();
 
+  const { db: dbCategory, label } = entry;
   const posts = await fetchPublishedPostsByCategory(dbCategory);
   const cards: PostCardData[] = await Promise.all(posts.map((p) => postRowToCardData(p)));
 
   return (
     <main className="relative min-h-dvh bg-[#02040d] text-zinc-100">
+      <JsonLd data={categoryBreadcrumbs(key)} />
       <SiteBackdrop />
       <Navbar />
       <div className="relative z-10 mx-auto max-w-[1800px] px-5 pb-20 pt-28 sm:px-8 lg:px-12 xl:px-16">

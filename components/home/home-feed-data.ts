@@ -110,6 +110,33 @@ const categoryPool: PostCardData[] = [
       alt: "Retro gaming placeholder",
     },
   },
+  {
+    href: "/articles/marvel-event-teaser",
+    title: "Major Publisher Teases Crossover Event — First Covers Drop",
+    category: "Comics",
+    image: {
+      src: "https://images.unsplash.com/photo-1612036782180-6f0b6cd8fe83?w=800&q=80",
+      alt: "Comic books placeholder",
+    },
+  },
+  {
+    href: "/articles/graphic-novel-picks",
+    title: "Five Graphic Novels Worth Reading Before the Adaptation Hits",
+    category: "Comics",
+    image: {
+      src: "https://images.unsplash.com/photo-1588495752521-94a7c19e6d9e?w=800&q=80",
+      alt: "Graphic novel shelf placeholder",
+    },
+  },
+  {
+    href: "/articles/superhero-lore-deep-dive",
+    title: "Superhero Lore Deep Dive: Canon Changes Fans Are Debating",
+    category: "Comics",
+    image: {
+      src: "https://images.unsplash.com/photo-1608889825105-eb5ed706fc32?w=800&q=80",
+      alt: "Superhero art placeholder",
+    },
+  },
 ];
 
 function byCategory(cat: PostCategory, take: number): PostCardData[] {
@@ -150,5 +177,13 @@ export const homeCategoryBands: {
     title: "Games",
     description: "Launches, patches, and the titles dominating the conversation.",
     posts: byCategory("Game", 3),
+  },
+  {
+    id: "comics",
+    label: "Comics",
+    title: "Comics",
+    description:
+      "Marvel/DC news, graphic novels, superhero lore, and comic-to-screen adaptations.",
+    posts: byCategory("Comics", 3),
   },
 ];
